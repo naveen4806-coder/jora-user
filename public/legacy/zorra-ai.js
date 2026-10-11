@@ -1,61 +1,434 @@
-/* Jora AI catalogue-first assistant. All matching is done only against live Jora products. */
 (function () {
-  'use strict';
-  var state = { shown: [], pending: [], messages: [] };
-  var RECIPES = {
-    biryani: ['rice', 'chicken', 'onion', 'tomato', 'curd', 'biryani masala', 'ginger garlic'],
-    'fried rice': ['rice', 'carrot', 'beans', 'onion', 'soy sauce', 'pepper'],
-    sambar: ['toor dal', 'tamarind', 'sambar powder', 'onion', 'tomato'],
-    pasta: ['pasta', 'tomato', 'cheese', 'onion'],
-    tea: ['milk', 'tea', 'sugar'], coffee: ['milk', 'coffee', 'sugar']
+  "use strict";
+
+  const state = { shown: [], pending: [] };
+
+  const recipes = {
+    biryani: ["rice", "chicken", "onion", "tomato", "curd", "biryani masala"],
+    "fried rice": ["rice", "carrot", "beans", "onion", "soy sauce"],
+    sambar: ["toor dal", "tamarind", "sambar powder", "onion", "tomato"],
+    pasta: ["pasta", "tomato", "cheese", "onion"],
+    tea: ["milk", "tea", "sugar"],
+    coffee: ["milk", "coffee", "sugar"]
   };
-  var ALIASES = { milk:['paal'], tomato:['thakkali'], onion:['vengayam'], rice:['arisi'], egg:['muttai'], chicken:['kozhi'], oil:['ennai'], sugar:['sakkarai'] };
-  var STOP = 'what are the in jora products product show find me please need want buy add items item available list of all tell about'.split(' ');
-  function esc(v) { return String(v == null ? '' : v).replace(/[&<>"']/g, function (c) { return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]; }); }
-  function norm(v) { return String(v || '').toLowerCase().replace(/[^a-z0-9\u0B80-\u0BFF]+/g, ' ').trim(); }
-  function tokens(v) { return norm(v).split(' ').filter(function (x) { return x.length > 1 && STOP.indexOf(x) < 0; }); }
-  function products() { return (Array.isArray(window._products) ? window._products : []).filter(function (p) { return p && p.id && String(p.id).indexOf('sample-') < 0 && +p.stock !== 0; }); }
-  function shop(id) { return (Array.isArray(window._shops) ? window._shops : []).find(function (s) { return s.id === id; }); }
-  function search(query) {
-    var q = tokens(query), expanded = q.slice();
-    Object.keys(ALIASES).forEach(function (key) { if (q.indexOf(key) > -1 || ALIASES[key].some(function (a) { return q.indexOf(a) > -1; })) expanded.push(key); });
-    return products().map(function (p) {
-      var hay = norm([p.name,p.brand,p.category,p.subcategory,p.description,p.tags,p.packSize,p.unit].join(' '));
-      var score = expanded.reduce(function (total, word) { return total + (hay.indexOf(word) > -1 ? (norm(p.brand).indexOf(word) > -1 ? 4 : 1) : 0); }, 0);
-      return { product:p, score:score };
-    }).filter(function (x) { return x.score > 0; }).sort(function (a,b) { return b.score-a.score || (+a.product.price||0)-(+b.product.price||0); }).map(function (x) { return toItem(x.product); });
+
+  function clean(value) {
+    return String(value || "")
+      .toLowerCase()
+      .replace(/[^a-z0-9\u0B80-\u0BFF]+/g, " ")
+      .trim();
   }
-  function toItem(p, qty) { var s = shop(p.shopId); return { id:p.id, shopId:p.shopId, name:p.name || 'Product', brand:p.brand || '', price:+p.price || 0, stock:+p.stock || 0, image:p.image || '', pack:p.packSize || p.unit || p.quantity || '', vendor:s ? s.name : 'Jora seller', qty:qty || 1 }; }
-  function say(role, text, html) { var body = document.getElementById('jora-ai-body'), el = document.createElement('div'); el.className = 'jai-msg ' + role; el.innerHTML = '<div class="jai-bubble">' + (html || esc(text)) + '</div>'; body.appendChild(el); body.scrollTop = body.scrollHeight; state.messages.push({role:role,text:text}); return el; }
-  function cardMarkup(items) { state.shown = items; return '<div class="jai-results">' + items.map(function (x, i) { var image = x.image ? '<img src="'+esc(x.image)+'" alt="" onerror="this.remove()">' : '<span class="jai-placeholder">🛍️</span>'; return '<label class="jai-card">'+image+'<span class="jai-info"><b>'+esc(x.name)+'</b><small>'+esc([x.brand,x.pack,x.vendor].filter(Boolean).join(' · '))+'</small><strong>₹'+x.price.toLocaleString('en-IN')+'</strong></span><input type="checkbox" data-jai-item="'+i+'" checked aria-label="Select '+esc(x.name)+'"></label>'; }).join('') + '</div><button class="jai-review" data-jai="review">Review selected items</button>'; }
-  function answer(text, items, extra) { say('assistant', text, esc(text) + (items && items.length ? cardMarkup(items) : '') + (extra || '')); }
-  function allCatalogue() { var list = products().slice().sort(function(a,b){ return (+a.price||0)-(+b.price||0); }).slice(0,8).map(toItem); var cats = products().reduce(function(a,p){ var c=p.category || 'Other'; a[c]=(a[c]||0)+1; return a; },{}); var summary = Object.keys(cats).slice(0,5).map(function(c){return c+' ('+cats[c]+')';}).join(', '); answer(list.length ? 'Jora currently has '+products().length+' available products. Popular categories: '+summary+'. Here are some items you can shop.' : 'The Jora catalogue has not loaded yet. Please refresh and choose your location, then try again.', list); }
-  function recipe(text) { var name = Object.keys(RECIPES).find(function (r) { return norm(text).indexOf(r) > -1; }); if (!name) return false; var want = RECIPES[name], used = {}, found = []; want.forEach(function (ingredient) { var hit = search(ingredient).find(function (x) { return !used[x.id]; }); if (hit) { used[hit.id] = true; found.push(hit); } }); answer(found.length ? 'I found '+found.length+' Jora ingredients for '+name+'. Select what you want, then I’ll ask before adding them to your cart.' : 'I could not match ingredients for '+name+' in the live Jora catalogue yet.', found); return true; }
-  function respond(text) {
-    var q = norm(text);
-    if (/^(hi|hello|hey)\b/.test(q)) return answer('Hi! Ask me for a brand, a product, a recipe, or “what products are in Jora?”.');
-    if (/(what.*products|products.*jora|catalog|catalogue|what.*available|show.*all)/.test(q)) return allCatalogue();
-    if (recipe(text)) return;
-    var hits = search(text).slice(0,8);
-    if (hits.length) return answer('I found '+hits.length+' matching Jora product'+(hits.length === 1 ? '' : 's')+'. Select the items you want and review them before adding to your cart.', hits);
-    answer('I could not find that in the loaded Jora catalogue. Try a product or brand name, for example “Amul milk”, or upload a shopping-list image.');
+
+  function escapeHTML(value) {
+    return String(value || "").replace(/[&<>"']/g, char => ({
+      "&": "&amp;",
+      "<": "&lt;",
+      ">": "&gt;",
+      '"': "&quot;",
+      "'": "&#39;"
+    }[char]));
   }
-  function review() { var checks = [].slice.call(document.querySelectorAll('#jora-ai-body [data-jai-item]')); var chosen = state.shown.filter(function (item,i) { return checks[i] && checks[i].checked; }); if (!chosen.length) return answer('Select at least one item to continue.'); var byShop = chosen.reduce(function (a,x){ (a[x.shopId]||(a[x.shopId]=[])).push(x); return a; },{}); var best = Object.keys(byShop).sort(function(a,b){ return byShop[b].length-byShop[a].length; })[0]; state.pending = byShop[best]; var total = state.pending.reduce(function(a,x){ return a+x.price*x.qty; },0); answer('I found '+state.pending.length+' item'+(state.pending.length===1?'':'s')+' from '+state.pending[0].vendor+' (₹'+total.toLocaleString('en-IN')+'). Would you like me to add them to your cart?', null, '<div class="jai-permission"><button data-jai="confirm">Yes, add to cart</button><button data-jai="cancel">No, keep browsing</button></div>'); }
-  function addCart() { var count = 0; state.pending.forEach(function (item) { var input = document.createElement('input'); input.type='number'; input.hidden=true; input.id='qty-'+(typeof window.safeId==='function'?window.safeId(item.id):item.id); input.value=item.qty; document.body.appendChild(input); try { if (typeof window.addToCart === 'function') { window.addToCart(item.id,item.shopId); count++; } } catch(e) {} input.remove(); }); state.pending=[]; answer(count ? count+' item'+(count===1?' was':'s were')+' added to your Jora cart.' : 'I could not update the cart. Please try again from the product page.'); }
-  async function readImage(file) {
-    if (!file || !file.type.match(/^image\//)) return answer('Please choose an image of a handwritten or typed shopping list.');
-    say('user','Shopping list image: '+file.name); var wait=say('assistant','Reading your list…','<span class="jai-loading">Reading your shopping list…</span>');
+
+  function catalogue() {
+    return (window._products || []).filter(product =>
+      product &&
+      product.id &&
+      Number(product.stock) > 0 &&
+      !String(product.id).startsWith("sample-")
+    );
+  }
+
+  function getShop(shopId) {
+    return (window._shops || []).find(shop => shop.id === shopId);
+  }
+
+  function toItem(product, qty = 1) {
+    const shop = getShop(product.shopId);
+
+    return {
+      id: product.id,
+      shopId: product.shopId,
+      name: product.name || "Product",
+      brand: product.brand || "",
+      image: product.image || "",
+      pack: product.packSize || product.unit || "",
+      price: Number(product.price) || 0,
+      qty,
+      vendor: shop ? shop.name : "Jora seller"
+    };
+  }
+
+  function searchProducts(query) {
+    const words = clean(query)
+      .split(" ")
+      .filter(word =>
+        word.length > 1 &&
+        ![
+          "what", "are", "the", "in", "jora", "products",
+          "product", "show", "find", "please", "need", "want",
+          "items", "available", "list", "all"
+        ].includes(word)
+      );
+
+    return catalogue()
+      .map(product => {
+        const searchable = clean([
+          product.name,
+          product.brand,
+          product.category,
+          product.subcategory,
+          product.description,
+          product.tags,
+          product.packSize
+        ].join(" "));
+
+        const score = words.reduce((total, word) => {
+          if (!searchable.includes(word)) return total;
+
+          return total + (
+            clean(product.brand).includes(word) ? 4 : 1
+          );
+        }, 0);
+
+        return { product, score };
+      })
+      .filter(result => result.score > 0)
+      .sort((a, b) => b.score - a.score || Number(a.product.price) - Number(b.product.price))
+      .map(result => toItem(result.product));
+  }
+
+  function addMessage(role, text, html = "") {
+    const body = document.getElementById("jora-ai-body");
+    const message = document.createElement("div");
+
+    message.className = `jai-msg ${role}`;
+    message.innerHTML = `<div class="jai-bubble">${html || escapeHTML(text)}</div>`;
+
+    body.appendChild(message);
+    body.scrollTop = body.scrollHeight;
+  }
+
+  function productCards(items) {
+    state.shown = items;
+
+    return `
+      <div class="jai-results">
+        ${items.map((item, index) => `
+          <label class="jai-card">
+            ${
+              item.image
+                ? `<img src="${escapeHTML(item.image)}" alt="">`
+                : `<span class="jai-placeholder">🛍️</span>`
+            }
+
+            <span class="jai-info">
+              <b>${escapeHTML(item.name)}</b>
+              <small>${escapeHTML([item.brand, item.pack, item.vendor].filter(Boolean).join(" · "))}</small>
+              <strong>₹${item.price.toLocaleString("en-IN")}</strong>
+            </span>
+
+            <input
+              type="checkbox"
+              checked
+              data-jai-item="${index}"
+              aria-label="Select ${escapeHTML(item.name)}"
+            >
+          </label>
+        `).join("")}
+      </div>
+
+      <button class="jai-review" data-jai-action="review">
+        Review selected items
+      </button>
+    `;
+  }
+
+  function answer(text, items = [], extra = "") {
+    addMessage(
+      "assistant",
+      text,
+      `${escapeHTML(text)}${items.length ? productCards(items) : ""}${extra}`
+    );
+  }
+
+  function showCatalogue() {
+    const items = catalogue()
+      .sort((a, b) => Number(a.price) - Number(b.price))
+      .slice(0, 8)
+      .map(product => toItem(product));
+
+    answer(
+      items.length
+        ? `Jora currently has ${catalogue().length} available products. Here are some products you can shop.`
+        : "The Jora catalogue has not loaded yet. Please refresh and try again.",
+      items
+    );
+  }
+
+  function showRecipe(query) {
+    const recipeName = Object.keys(recipes).find(name =>
+      clean(query).includes(name)
+    );
+
+    if (!recipeName) return false;
+
+    const used = new Set();
+    const items = [];
+
+    recipes[recipeName].forEach(ingredient => {
+      const item = searchProducts(ingredient).find(product => !used.has(product.id));
+
+      if (item) {
+        used.add(item.id);
+        items.push(item);
+      }
+    });
+
+    answer(
+      items.length
+        ? `I found ${items.length} Jora ingredients for ${recipeName}. Select the items you want, then I will ask before adding them to your cart.`
+        : `I could not match ingredients for ${recipeName} in the current Jora catalogue.`,
+      items
+    );
+
+    return true;
+  }
+
+  function respond(query) {
+    const text = clean(query);
+
+    if (/(what.*products|products.*jora|catalog|catalogue|what.*available|show.*all)/.test(text)) {
+      showCatalogue();
+      return;
+    }
+
+    if (showRecipe(query)) return;
+
+    const matches = searchProducts(query).slice(0, 8);
+
+    if (matches.length) {
+      answer(
+        `I found ${matches.length} matching Jora product${matches.length === 1 ? "" : "s"}. Review your selection before adding anything to the cart.`,
+        matches
+      );
+      return;
+    }
+
+    answer(
+      "I could not find that in the loaded Jora catalogue. Try a product or brand name, such as “Amul milk”, or upload a shopping-list image."
+    );
+  }
+
+  function reviewItems() {
+    const selectedBoxes = [...document.querySelectorAll("#jora-ai-body [data-jai-item]")];
+
+    const selected = state.shown.filter((item, index) =>
+      selectedBoxes[index]?.checked
+    );
+
+    if (!selected.length) {
+      answer("Select at least one item to continue.");
+      return;
+    }
+
+    // A Jora cart supports one vendor at a time.
+    const groupedByShop = selected.reduce((groups, item) => {
+      (groups[item.shopId] ||= []).push(item);
+      return groups;
+    }, {});
+
+    const selectedShop = Object.keys(groupedByShop)
+      .sort((a, b) => groupedByShop[b].length - groupedByShop[a].length)[0];
+
+    state.pending = groupedByShop[selectedShop];
+
+    const total = state.pending.reduce(
+      (sum, item) => sum + item.price * item.qty,
+      0
+    );
+
+    answer(
+      `I found ${state.pending.length} item${state.pending.length === 1 ? "" : "s"} from ${state.pending[0].vendor}. Total: ₹${total.toLocaleString("en-IN")}. Add them to your cart?`,
+      [],
+      `
+        <div class="jai-permission">
+          <button data-jai-action="confirm">Yes, add to cart</button>
+          <button data-jai-action="cancel">No, keep browsing</button>
+        </div>
+      `
+    );
+  }
+
+  function confirmCart() {
+    let added = 0;
+
+    state.pending.forEach(item => {
+      if (typeof window.addToCart !== "function") return;
+
+      const input = document.createElement("input");
+      input.type = "number";
+      input.hidden = true;
+      input.id = `qty-${typeof window.safeId === "function" ? window.safeId(item.id) : item.id}`;
+      input.value = item.qty;
+
+      document.body.appendChild(input);
+
+      try {
+        window.addToCart(item.id, item.shopId);
+        added++;
+      } catch (error) {
+        console.warn("Jora AI cart error:", error);
+      }
+
+      input.remove();
+    });
+
+    state.pending = [];
+
+    answer(
+      added
+        ? `${added} item${added === 1 ? " was" : "s were"} added to your Jora cart.`
+        : "I could not update the cart. Please try again from the product page."
+    );
+  }
+
+  async function readShoppingListImage(file) {
+    if (!file || !file.type.startsWith("image/")) {
+      answer("Please choose an image of a shopping list.");
+      return;
+    }
+
+    addMessage("user", `Shopping-list image: ${file.name}`);
+
+    if (!("TextDetector" in window)) {
+      answer("Image-list reading is not available in this browser. Please type the list instead.");
+      return;
+    }
+
     try {
-      if (!('TextDetector' in window)) throw Error('unsupported');
-      var bitmap=await createImageBitmap(file), detector=new TextDetector(), blocks=await detector.detect(bitmap), text=blocks.map(function(b){return b.rawValue;}).join(' '); if (!text.trim()) throw Error('empty'); wait.remove(); var wanted=tokens(text), seen={}, matches=[]; wanted.forEach(function(word){ search(word).slice(0,1).forEach(function(item){if(!seen[item.id]){seen[item.id]=true;matches.push(item);}}); }); answer(matches.length ? 'I read your list and found '+matches.length+' matching Jora items. Please review them before adding to your cart.' : 'I read the image, but could not match its words with current Jora products. You can type the items instead.', matches);
-    } catch (error) { wait.remove(); answer('Image-list reading is not available in this browser yet. Please type the list, or use a browser that supports on-device text recognition.'); }
+      const bitmap = await createImageBitmap(file);
+      const detector = new TextDetector();
+      const blocks = await detector.detect(bitmap);
+      const text = blocks.map(block => block.rawValue).join(" ");
+
+      const found = [];
+      const used = new Set();
+
+      clean(text).split(" ").forEach(word => {
+        searchProducts(word).slice(0, 1).forEach(item => {
+          if (!used.has(item.id)) {
+            used.add(item.id);
+            found.push(item);
+          }
+        });
+      });
+
+      answer(
+        found.length
+          ? `I read the list and found ${found.length} matching Jora items. Review them before adding to the cart.`
+          : "I read the image, but could not match its words with Jora products.",
+        found
+      );
+    } catch {
+      answer("I could not read this image. Please upload a clearer shopping-list image or type the items.");
+    }
   }
-  function mount() {
-    document.getElementById('zai-panel')?.remove(); document.getElementById('zai-launcher')?.remove();
-    var style=document.createElement('style'); style.textContent=':root{--jai:#0b7a43;--jai-dark:#075a31;--jai-line:#dbe9df}.jai-open{position:fixed;right:18px;bottom:18px;z-index:2147483001;border:0;border-radius:999px;background:var(--jai);color:#fff;padding:13px 17px;font:800 14px Arial;box-shadow:0 12px 30px #075a3144;cursor:pointer}.jai-panel{position:fixed;right:18px;bottom:18px;z-index:2147483002;display:none;flex-direction:column;width:min(430px,calc(100vw - 24px));height:min(690px,calc(100dvh - 30px));border:1px solid var(--jai-line);border-radius:22px;overflow:hidden;background:#fff;box-shadow:0 24px 65px #0a301c33;font-family:Arial,sans-serif}.jai-panel.open{display:flex}.jai-head{display:flex;align-items:center;gap:10px;padding:14px;background:linear-gradient(135deg,var(--jai-dark),var(--jai));color:#fff}.jai-avatar{display:grid;place-items:center;width:38px;height:38px;border-radius:12px;background:#fff;color:var(--jai);font-weight:900}.jai-head b{display:block}.jai-head small{color:#d8f7e4}.jai-close{margin-left:auto;border:0;border-radius:9px;background:#ffffff22;color:#fff;font-size:20px;cursor:pointer}.jai-body{flex:1;overflow:auto;padding:14px;background:#f4f8f5}.jai-msg{display:flex;margin-bottom:11px}.jai-msg.user{justify-content:flex-end}.jai-bubble{max-width:88%;padding:11px 12px;border:1px solid var(--jai-line);border-radius:15px 15px 15px 4px;background:#fff;color:#16221b;font-size:13px;line-height:1.45}.jai-msg.user .jai-bubble{border-color:var(--jai);border-radius:15px 15px 4px 15px;background:var(--jai);color:#fff}.jai-results{display:grid;gap:8px;margin-top:10px}.jai-card{display:grid;grid-template-columns:50px 1fr 22px;gap:9px;align-items:center;padding:8px;border:1px solid var(--jai-line);border-radius:12px;background:#fff}.jai-card img,.jai-placeholder{width:50px;height:50px;border-radius:9px;object-fit:cover;background:#e8f6ed}.jai-placeholder{display:grid;place-items:center}.jai-info b,.jai-info small,.jai-info strong{display:block}.jai-info small{margin-top:3px;color:#64736a;font-size:10px}.jai-info strong{margin-top:3px;color:var(--jai);font-size:12px}.jai-card input{accent-color:var(--jai);width:18px;height:18px}.jai-review,.jai-permission button{margin-top:9px;border:0;border-radius:10px;background:var(--jai);color:#fff;padding:10px 12px;font-weight:800;cursor:pointer}.jai-permission{display:flex;gap:7px}.jai-permission button:last-child{background:#fff;color:#385246;border:1px solid var(--jai-line)}.jai-compose{padding:10px;border-top:1px solid var(--jai-line);background:#fff}.jai-tools{display:flex;gap:7px;margin-bottom:8px}.jai-upload{display:inline-flex;align-items:center;gap:5px;padding:7px 9px;border:1px solid var(--jai-line);border-radius:9px;color:var(--jai-dark);font-size:11px;font-weight:800;cursor:pointer}.jai-upload input{display:none}.jai-row{display:grid;grid-template-columns:1fr 43px;gap:7px}.jai-row textarea{resize:none;min-height:43px;border:1px solid var(--jai-line);border-radius:11px;padding:10px;font:13px Arial}.jai-row button{border:0;border-radius:11px;background:var(--jai);color:#fff;font-size:18px;cursor:pointer}.jai-note{margin-top:6px;color:#718078;font-size:10px;text-align:center}@media(max-width:600px){.jai-open{display:none}.jai-panel{inset:0;width:100%;height:100dvh;border:0;border-radius:0}.jai-body{padding:12px}}'; document.head.appendChild(style);
-    var wrap=document.createElement('div'); wrap.innerHTML='<button class="jai-open" id="jora-ai-open">Ask Jora AI</button><section class="jai-panel" id="jora-ai-panel" role="dialog" aria-label="Jora AI shopping assistant"><header class="jai-head"><span class="jai-avatar">J</span><div><b>Jora AI</b><small>Catalogue & recipe assistant</small></div><button class="jai-close" aria-label="Close">×</button></header><main class="jai-body" id="jora-ai-body"></main><footer class="jai-compose"><div class="jai-tools"><label class="jai-upload">▣ Scan shopping-list image<input id="jora-ai-image" type="file" accept="image/*"></label></div><div class="jai-row"><textarea id="jora-ai-input" rows="1" placeholder="Ask for products, brands or a recipe…"></textarea><button id="jora-ai-send" aria-label="Send">➜</button></div><div class="jai-note">Only selected items are reviewed; nothing is added without your approval.</div></footer></section>'; document.body.appendChild(wrap);
-    var panel=document.getElementById('jora-ai-panel'), input=document.getElementById('jora-ai-input'); function open(){panel.classList.add('open');input.focus(); if(!state.messages.length) answer('Hi! I can search Jora products by name or brand, build recipe lists, or scan a shopping-list image. What do you need?');} document.getElementById('jora-ai-open').onclick=open; panel.querySelector('.jai-close').onclick=function(){panel.classList.remove('open');}; document.getElementById('jora-ai-send').onclick=function(){var value=input.value.trim(); if(value){say('user',value);input.value='';respond(value);}}; input.onkeydown=function(e){if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();document.getElementById('jora-ai-send').click();}}; document.getElementById('jora-ai-image').onchange=function(e){readImage(e.target.files[0]);e.target.value='';}; document.getElementById('jora-ai-body').onclick=function(e){var action=e.target.closest('[data-jai]'); if(!action)return; if(action.dataset.jai==='review')review(); if(action.dataset.jai==='confirm')addCart(); if(action.dataset.jai==='cancel')answer('No items were added. You can choose different products anytime.');};
+
+  function mountJoraAI() {
+    const wrapper = document.createElement("div");
+
+    wrapper.innerHTML = `
+      <button class="jai-open" id="jora-ai-open">Ask Jora AI</button>
+
+      <section class="jai-panel" id="jora-ai-panel" role="dialog" aria-label="Jora AI">
+        <header class="jai-head">
+          <span class="jai-avatar">J</span>
+
+          <div>
+            <b>Jora AI</b>
+            <small>Catalogue & recipe assistant</small>
+          </div>
+
+          <button class="jai-close" id="jora-ai-close" aria-label="Close">×</button>
+        </header>
+
+        <main class="jai-body" id="jora-ai-body" aria-live="polite"></main>
+
+        <footer class="jai-compose">
+          <label class="jai-upload">
+            ▣ Scan shopping-list image
+            <input id="jora-ai-image" type="file" accept="image/*">
+          </label>
+
+          <div class="jai-row">
+            <textarea
+              id="jora-ai-input"
+              rows="1"
+              placeholder="Ask for products, brands or a recipe…"
+            ></textarea>
+
+            <button id="jora-ai-send" aria-label="Send">➜</button>
+          </div>
+
+          <div class="jai-note">
+            Nothing is added without your approval.
+          </div>
+        </footer>
+      </section>
+    `;
+
+    document.body.appendChild(wrapper);
+
+    const panel = document.getElementById("jora-ai-panel");
+    const input = document.getElementById("jora-ai-input");
+
+    document.getElementById("jora-ai-open").onclick = () => {
+      panel.classList.add("open");
+      input.focus();
+
+      if (!document.getElementById("jora-ai-body").children.length) {
+        answer("Hi! Ask me for a brand, a product, a recipe, or “what products are in Jora?”.");
+      }
+    };
+
+    document.getElementById("jora-ai-close").onclick = () => {
+      panel.classList.remove("open");
+    };
+
+    document.getElementById("jora-ai-send").onclick = () => {
+      const query = input.value.trim();
+
+      if (!query) return;
+
+      addMessage("user", query);
+      input.value = "";
+      respond(query);
+    };
+
+    input.onkeydown = event => {
+      if (event.key === "Enter" && !event.shiftKey) {
+        event.preventDefault();
+        document.getElementById("jora-ai-send").click();
+      }
+    };
+
+    document.getElementById("jora-ai-image").onchange = event => {
+      readShoppingListImage(event.target.files[0]);
+      event.target.value = "";
+    };
+
+    document.getElementById("jora-ai-body").onclick = event => {
+      const action = event.target.closest("[data-jai-action]")?.dataset.jaiAction;
+
+      if (action === "review") reviewItems();
+      if (action === "confirm") confirmCart();
+      if (action === "cancel") answer("No items were added. You can keep browsing.");
+    };
   }
-  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', mount); else mount();
-  window.JoraAI = { open:function(){document.getElementById('jora-ai-open').click();}, search:search };
+
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", mountJoraAI);
+  } else {
+    mountJoraAI();
+  }
 }());
