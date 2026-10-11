@@ -1,3 +1,4 @@
+</body>
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -4893,3 +4894,21 @@ var joraAsset='assets/jora-logo.png?v=20261009';document.querySelectorAll('.nav-
 <script src="jora-transition.js"></script>
 </body>
 </html>
+
+<!-- Load the externally maintained Jora AI after the legacy inline assistant. -->
+<script>
+window.addEventListener('DOMContentLoaded', function () {
+  document.getElementById('zai-panel')?.remove();
+  document.getElementById('zai-launcher')?.remove();
+  document.querySelectorAll('.zai-nav-item').forEach(function (item) { item.remove(); });
+
+  var css = document.createElement('link');
+  css.rel = 'stylesheet';
+  css.href = 'zorra-ai.css?v=20261011';
+  document.head.appendChild(css);
+
+  var script = document.createElement('script');
+  script.src = 'zorra-ai.js?v=20261011';
+  document.body.appendChild(script);
+});
+</script>
