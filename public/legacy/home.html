@@ -4912,3 +4912,18 @@ window.addEventListener('DOMContentLoaded', function () {
   document.body.appendChild(script);
 });
 </script>
+
+<!-- Jora payment entry point. Razorpay secrets remain server-only. -->
+<script>
+window.addEventListener('DOMContentLoaded', function () {
+  var cartButton = document.getElementById('nav-cart-btn');
+  if (!cartButton || document.getElementById('jora-payment-link')) return;
+  var link = document.createElement('a');
+  link.id = 'jora-payment-link';
+  link.href = 'payment.html';
+  link.textContent = 'Pay online';
+  link.setAttribute('aria-label', 'Open secure online payment');
+  link.style.cssText = 'display:inline-flex;align-items:center;justify-content:center;margin-right:9px;padding:10px 15px;border-radius:12px;background:#08783f;color:#fff;text-decoration:none;font:800 13px Outfit,Arial,sans-serif;box-shadow:0 6px 16px rgba(8,120,63,.18)';
+  cartButton.parentNode.insertBefore(link, cartButton);
+});
+</script>
