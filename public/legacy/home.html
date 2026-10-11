@@ -4927,3 +4927,44 @@ window.addEventListener('DOMContentLoaded', function () {
   cartButton.parentNode.insertBefore(link, cartButton);
 });
 </script>
+
+<!-- Payment method is part of the existing checkout modal, below Cash on Delivery. -->
+<script>
+window.addEventListener('DOMContentLoaded', function () {
+  document.getElementById('jora-payment-link')?.remove();
+  var mounted = false;
+  function mountOnlinePaymentOption() {
+    var methods = document.querySelector('.pay-methods');
+    if (!methods || mounted) return;
+    mounted = true;
+    var option = document.createElement('div');
+    option.className = 'pay-opt';
+    option.innerHTML = '<input type="radio" name="pay-method" id="pay-online" value="online" onchange="onPayMethodChange()"><label class="pay-opt-label" for="pay-online"><span class="pay-opt-icon">🔒</span><div class="pay-opt-info"><div class="pay-opt-name">Pay Online</div><div class="pay-opt-sub">UPI, card, net banking & wallets</div></div><div class="pay-opt-check"></div></label>';
+    methods.appendChild(option);
+    var onlineNote = document.createElement('div');
+    onlineNote.id = 'pay-online-note';
+    onlineNote.className = 'pay-cod-note';
+    onlineNote.textContent = '🔒 Online payment will be enabled after Jora securely connects Razorpay.';
+    document.getElementById('pay-cod-note')?.insertAdjacentElement('afterend', onlineNote);
+    var originalPayChange = window.onPayMethodChange;
+    window.onPayMethodChange = function () {
+      originalPayChange?.();
+      var online = document.getElementById('pay-online')?.checked;
+      document.getElementById('pay-cod-note')?.classList.toggle('show', !online);
+      onlineNote.classList.toggle('show', !!online);
+      var button = document.getElementById('btn-confirm-order');
+      if (button) button.textContent = online ? 'Continue to Online Payment' : 'Confirm & Place Order';
+    };
+    var originalConfirmOrder = window.confirmOrder;
+    window.confirmOrder = function () {
+      if (document.getElementById('pay-online')?.checked) {
+        toast('Online payment is not configured yet. Please select Cash on Delivery or try again after Razorpay setup is complete.', 'err');
+        return;
+      }
+      return originalConfirmOrder.apply(this, arguments);
+    };
+  }
+  mountOnlinePaymentOption();
+  new MutationObserver(mountOnlinePaymentOption).observe(document.body, { childList: true, subtree: true });
+});
+</script>
