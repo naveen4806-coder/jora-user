@@ -188,6 +188,7 @@
   padding: 10px;
   border-top: 1px solid var(--jai-line);
   background: #fff;
+  color: white;
 }
 
 .jai-upload {
@@ -197,7 +198,7 @@
   padding: 7px 9px;
   border: 1px solid var(--jai-line);
   border-radius: 9px;
-  color: var(--jai-dark);
+  color: white;
   font-size: 11px;
   font-weight: 800;
   cursor: pointer;
