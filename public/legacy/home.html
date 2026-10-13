@@ -2265,7 +2265,8 @@ var _currentUser=null;
 var _banners=[],_offers=[];
 var _bgIdx=0,_bgTimer=null,_bgUnsub=null;
 var _settingsOpen=false;
-var _theme=ld('ls_theme','light');
+/* Settings pages use jora_theme; keep the legacy Home preference in sync. */
+var _theme=ld('jora_theme',ld('ls_theme','light'));
 var _lang=ld('ls_lang','en');
 var I18N={
   en:{
@@ -2407,7 +2408,7 @@ function t(key){var dict=I18N[_lang]||I18N.en;return dict[key]||I18N.en[key]||ke
 function setTxt(id,key){var el=document.getElementById(id);if(el)el.textContent=t(key);}
 function itemLabel(count){return t(count===1?'item_one':'item_many');}
 function money(value){return 'Rs. '+(Number(value)||0);}
-function applyTheme(){document.body.classList.toggle('theme-dark',_theme==='dark');var lb=document.getElementById('theme-light-btn'),db=document.getElementById('theme-dark-btn');if(lb)lb.classList.toggle('active',_theme==='light');if(db)db.classList.toggle('active',_theme==='dark');}
+function applyTheme(){document.documentElement.dataset.theme=_theme;document.body.classList.toggle('theme-dark',_theme==='dark');var lb=document.getElementById('theme-light-btn'),db=document.getElementById('theme-dark-btn');if(lb)lb.classList.toggle('active',_theme==='light');if(db)db.classList.toggle('active',_theme==='dark');}
 function applyLanguage(){
   document.documentElement.lang=_lang==='hi'?'hi':(_lang==='ta'?'ta':'en');
   setTxt('nav-wishlist-txt','nav_wishlist');setTxt('nav-orders-txt','nav_orders');
@@ -2428,7 +2429,7 @@ function applyLanguage(){
   var notifLoading=document.getElementById('nd-list');if(notifLoading&&notifLoading.textContent.trim()==='Loading...')notifLoading.innerHTML='<div style="padding:24px;text-align:center;color:#aaa;font-size:.8rem">'+t('notif_loading')+'</div>';
 }
 function updateSettingsButtons(){['en','hi','ta'].forEach(function(code){var btn=document.getElementById('lang-'+code+'-btn');if(btn)btn.classList.toggle('active',_lang===code);});var wrap=document.getElementById('settings-wrap');var btn=document.getElementById('settings-btn');if(wrap&&btn)btn.setAttribute('aria-expanded',wrap.classList.contains('open')?'true':'false');}
-function setTheme(theme){_theme=theme==='dark'?'dark':'light';sv('ls_theme',_theme);applyTheme();updateSettingsButtons();toast(t(_theme==='dark'?'toast_theme_dark':'toast_theme_light'),'info');}
+function setTheme(theme){_theme=theme==='dark'?'dark':'light';sv('jora_theme',_theme);sv('ls_theme',_theme);applyTheme();updateSettingsButtons();toast(t(_theme==='dark'?'toast_theme_dark':'toast_theme_light'),'info');}
 function setLanguage(lang){if(!I18N[lang])lang='en';_lang=lang;sv('ls_lang',_lang);applyLanguage();toast(t('toast_language'),'info');}
 function toggleSettingsPanel(){var wrap=document.getElementById('settings-wrap'),panel=document.getElementById('settings-panel');if(!wrap||!panel)return;var opening=!document.body.classList.contains('settings-open');if(opening){wrap.classList.add('open');document.body.classList.add('settings-open');if(window.matchMedia('(max-width:760px)').matches){document.body.appendChild(panel);panel.classList.add('mobile-settings-panel');}closeCategoryMenu();syncHomeNotificationSettings();}else closeSettingsPanel();updateSettingsButtons();}
 function closeSettingsPanel(){var wrap=document.getElementById('settings-wrap'),panel=document.getElementById('settings-panel');if(wrap)wrap.classList.remove('open');document.body.classList.remove('settings-open');if(wrap&&panel&&panel.parentNode!==wrap){panel.classList.remove('mobile-settings-panel');wrap.appendChild(panel);}updateSettingsButtons();}
@@ -4863,4 +4864,23 @@ window.addEventListener('DOMContentLoaded', function () {
   mountOnlinePaymentOption();
   new MutationObserver(mountOnlinePaymentOption).observe(document.body, { childList: true, subtree: true });
 });
+</script>
+
+<!-- Must remain last: legacy Home styles above include light-only !important rules. -->
+<style id="jora-home-theme-final-style">
+body.theme-dark{background:#17201A!important;color:#EDF5EF!important}body.theme-dark .customer-home{background:#17201A!important;color:#EDF5EF!important}body.theme-dark .stores-sec,body.theme-dark .stores-sec .stores-grid .store-card,body.theme-dark .banner-gallery,body.theme-dark .bg-slide-type-image .bg-slide-inner,body.theme-dark .bg-slide-type-video .bg-slide-inner,body.theme-dark .bg-slide-type-image .bg-slide-content,body.theme-dark .bg-slide-type-video .bg-slide-content,body.theme-dark .zorra-album-spotlight,body.theme-dark .mobile-nav-shortcuts.zorra-compact-bottom{background:#222D25!important;border-color:#3D4E43!important;color:#EDF5EF!important}body.theme-dark .stores-sec .sec-title,body.theme-dark .stores-sec .stores-grid .store-name,body.theme-dark .bg-slide-content h2,body.theme-dark .zorra-album-head h2{color:#EDF5EF!important}body.theme-dark .stores-sec .nearby-note,body.theme-dark .stores-sec .stores-grid .store-meta,body.theme-dark .stores-sec .stores-grid .store-rating,body.theme-dark .stores-sec .stores-grid .store-delivery-chip,body.theme-dark .bg-slide-content p{color:#B9C8BE!important}body.theme-dark .stores-sec .shop-view-toggle,body.theme-dark .bg-prev,body.theme-dark .bg-next{background:#1A271E!important;border-color:#3D4E43!important;color:#D7F5DF!important}body.theme-dark .nav-logo{background:#1A271E!important;border-color:#3D4E43!important}
+</style>
+<script id="jora-home-theme-final-sync">
+(function(){
+  function applyHomeTheme(){
+    var theme=localStorage.getItem('jora_theme')||localStorage.getItem('ls_theme')||'light';
+    theme=theme==='dark'?'dark':'light';
+    localStorage.setItem('jora_theme',theme);
+    localStorage.setItem('ls_theme',theme);
+    document.documentElement.dataset.theme=theme;
+    document.body.classList.toggle('theme-dark',theme==='dark');
+  }
+  applyHomeTheme();
+  window.addEventListener('storage',function(event){if(event.key==='jora_theme'||event.key==='ls_theme')applyHomeTheme();});
+})();
 </script>
