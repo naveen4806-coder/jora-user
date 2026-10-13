@@ -19,7 +19,7 @@
     edit.className = 'jora-map-editor';
     edit.innerHTML = '<div><b>Edit delivery address on map</b><small>Search, move the pin, and save your exact location.</small></div><button type="button" id="checkout-open-map">Open Map</button>';
     pin.insertAdjacentElement('afterend', edit);
-    edit.querySelector('button').onclick = function () { map.scrollIntoView({ behavior: 'smooth', block: 'center' }); map.focus && map.focus(); };
+    edit.querySelector('button').onclick = function () { location.href = 'checkout-map.html'; };
     var cod = form.querySelector('input[name="payment"][value="cod"]');
     if (cod && !document.getElementById('pay-online')) {
       var online = document.createElement('label');
