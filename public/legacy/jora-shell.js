@@ -7,4 +7,5 @@
   function money(v){return '₹'+(Number(v)||0).toLocaleString('en-IN')}
   window.JoraShell={nav:nav,read:read,esc:esc,image:image,money:money,primary:P,active:A};
   document.documentElement.dataset.theme=localStorage.getItem('jora_theme')||'light';
+  if(!document.querySelector('link[href="jora-interactions.css"]')){var interactions=document.createElement('link');interactions.rel='stylesheet';interactions.href='jora-interactions.css';document.head.appendChild(interactions)}
 })();

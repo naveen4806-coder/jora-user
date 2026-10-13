@@ -1,0 +1,1 @@
+(function(){function fix(){var link=document.querySelector('.cart-link');if(link)link.href='cart.html'}if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',fix);else fix()})();
