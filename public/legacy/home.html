@@ -713,40 +713,6 @@ radial-gradient(circle at top right,rgba(255,107,26,.10),transparent 28%)}
 .btn-wish-order:hover{background:var(--orange-dark)}
 .btn-wish-rm{padding:6px 10px;background:#FEF2F2;border:1px solid #FECACA;color:var(--error);border-radius:7px;font-size:.76rem;font-weight:700;cursor:pointer;font-family:var(--fb);flex-shrink:0}
 
-/* PROFILE MODAL */
-#profile-modal .modal{max-width:500px;background:
-linear-gradient(180deg,rgba(255,255,255,.99),rgba(255,255,255,.95)),
-radial-gradient(circle at top right,rgba(255,107,26,.12),transparent 30%);
-border:1px solid rgba(255,255,255,.88);
-box-shadow:0 36px 90px rgba(16,24,40,.2),0 14px 34px rgba(16,24,40,.08)}
-.profile-hdr{display:flex;align-items:flex-start;justify-content:space-between;padding:24px 24px 0;gap:14px}
-.profile-title-wrap{display:flex;flex-direction:column;gap:6px}
-.profile-title{font-family:var(--ff);font-size:1.36rem;font-weight:900;color:#14203A;letter-spacing:-.04em;line-height:1}
-.profile-sub{font-size:.76rem;color:#6B7280;line-height:1.55;max-width:290px}
-.profile-hero{position:relative;display:flex;align-items:center;gap:16px;margin:18px 18px 0;padding:18px;border-radius:28px;border:1px solid rgba(19,46,103,.08);background:
-linear-gradient(135deg,rgba(255,255,255,.94),rgba(255,255,255,.88)),
-radial-gradient(circle at top left,rgba(255,107,26,.12),transparent 34%);
-box-shadow:0 18px 34px rgba(16,24,40,.08),inset 0 1px 0 rgba(255,255,255,.7)}
-.profile-hero::after{content:'';position:absolute;inset:auto 18px -1px 18px;height:1px;background:linear-gradient(90deg,rgba(19,46,103,0),rgba(19,46,103,.1),rgba(19,46,103,0))}
-.profile-avatar{width:64px;height:64px;border-radius:22px;background:linear-gradient(135deg,#FF7A30,#0B2D6B 88%);display:flex;align-items:center;justify-content:center;font-family:var(--ff);font-weight:900;font-size:1.45rem;color:#fff;flex-shrink:0;box-shadow:0 16px 30px rgba(11,45,107,.22),inset 0 1px 0 rgba(255,255,255,.24)}
-.profile-identity{min-width:0;display:flex;flex-direction:column;gap:4px}
-.profile-name{font-family:var(--ff);font-size:1.1rem;font-weight:800;color:#14203A;letter-spacing:-.03em;line-height:1.1}
-.profile-email{font-size:.8rem;color:#667085;word-break:break-word}
-.profile-phone{font-size:.73rem;color:var(--orange-dark);font-weight:800;letter-spacing:.03em}
-.profile-tag{display:inline-flex;align-items:center;gap:6px;margin-top:8px;padding:6px 11px;border-radius:999px;background:rgba(11,45,107,.06);border:1px solid rgba(19,46,103,.08);font-size:.6rem;font-weight:800;letter-spacing:.16em;text-transform:uppercase;color:#18315F;width:fit-content}
-.profile-form-wrap{padding:20px 24px 0}
-.profile-section-title{font-size:.68rem;font-weight:800;letter-spacing:.16em;text-transform:uppercase;color:#7A869A;margin-bottom:14px}
-.profile-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
-#profile-modal .form-g{gap:7px;margin-bottom:14px}
-#profile-modal .form-l{font-size:.68rem;letter-spacing:.12em;color:#7B8091}
-#profile-modal .form-i{padding:13px 15px;border:1.5px solid rgba(19,46,103,.1);border-radius:16px;background:linear-gradient(180deg,rgba(255,255,255,.98),rgba(248,250,255,.95));font-size:.9rem;box-shadow:inset 0 1px 1px rgba(255,255,255,.7),0 6px 14px rgba(16,24,40,.03)}
-#profile-modal .form-i::placeholder{color:#A0A7B5}
-#profile-modal .form-i:focus{border-color:rgba(255,107,26,.6);box-shadow:0 0 0 4px rgba(255,107,26,.08),0 10px 24px rgba(255,107,26,.08);transform:translateY(-1px)}
-.profile-footer{padding:20px 24px 24px}
-.save-btn{width:100%;padding:14px 18px;background:linear-gradient(135deg,var(--orange),#FF8D4F);color:#fff;border:none;border-radius:18px;font-family:var(--ff);font-size:1rem;font-weight:800;cursor:pointer;transition:all .22s;margin-top:4px;box-shadow:0 18px 30px rgba(255,107,26,.24);letter-spacing:.01em}
-.save-btn:hover{background:linear-gradient(135deg,var(--orange-dark),var(--orange));transform:translateY(-2px);box-shadow:0 22px 36px rgba(255,107,26,.32)}
-.save-ok{display:none;align-items:center;gap:7px;background:linear-gradient(180deg,#EDFBF3,#E3F8EC);border:1px solid #A3E6C0;color:var(--success);border-radius:14px;padding:10px 13px;font-size:.82rem;font-weight:600;margin-top:12px}
-.save-ok.show{display:flex}
 .logout-btn{width:100%;padding:12px 16px;background:#FEF2F2;color:var(--error);border:1.5px solid #FECACA;border-radius:var(--r-md);font-family:var(--fb);font-size:.87rem;font-weight:700;cursor:pointer;transition:all .2s;display:flex;align-items:center;justify-content:center;gap:9px;margin-top:6px}
 .logout-btn:hover{background:var(--error);color:#fff;border-color:var(--error)}
 
@@ -883,7 +849,7 @@ radial-gradient(circle at 76% 72%,rgba(11,45,107,.24),transparent 28%),
 linear-gradient(180deg,#08111F 0%,#0B1426 45%,#0D1629 100%);
 color:#F8FAFC;--black:#F8FAFC;--dark:#E5ECF6;--mid:#A6B0C3;--muted:#7E8AA0;--light:#111B2D;--lighter:#0B1424;--white:#0F1A2C;--surface:rgba(15,26,44,.88);--surface-strong:rgba(10,18,34,.96);--border:rgba(148,163,184,.15);--border-strong:rgba(148,163,184,.24)}
 body.theme-dark .nav-logo,body.theme-dark nav,body.theme-dark .notif-btn,body.theme-dark .nav-profile-btn,body.theme-dark .settings-btn,body.theme-dark .search-wrap,body.theme-dark .notif-dropdown,body.theme-dark .settings-panel,body.theme-dark .new-products-section,body.theme-dark .np-card,body.theme-dark .stores-empty,body.theme-dark .modal,body.theme-dark footer{background:linear-gradient(180deg,rgba(15,26,44,.96),rgba(9,17,31,.92));border-color:rgba(148,163,184,.16);color:#F8FAFC}
-body.theme-dark .nav-links a:hover,body.theme-dark .settings-choice,body.theme-dark #profile-modal .form-i,body.theme-dark .reset-btn,body.theme-dark .section-nav-btn,body.theme-dark .search-box input,body.theme-dark .search-box button{background:linear-gradient(180deg,rgba(19,31,54,.98),rgba(15,26,44,.94));color:#E5ECF6;border-color:rgba(148,163,184,.18)}
+body.theme-dark .nav-links a:hover,body.theme-dark .settings-choice,body.theme-dark .reset-btn,body.theme-dark .section-nav-btn,body.theme-dark .search-box input,body.theme-dark .search-box button{background:linear-gradient(180deg,rgba(19,31,54,.98),rgba(15,26,44,.94));color:#E5ECF6;border-color:rgba(148,163,184,.18)}
 body.theme-dark .section-copy,body.theme-dark .cats-subtext,body.theme-dark .cat-meta,body.theme-dark .np-meta,body.theme-dark .np-empty-sub,body.theme-dark .se-s,body.theme-dark .settings-sub,body.theme-dark .profile-sub,body.theme-dark .profile-email,body.theme-dark .profile-phone,body.theme-dark .nearby-note{color:#A6B0C3}
 body.theme-dark .sec-title,body.theme-dark .cat-label,body.theme-dark .np-name,body.theme-dark .np-empty-title,body.theme-dark .se-t,body.theme-dark .settings-title,body.theme-dark .profile-title,body.theme-dark .profile-name,body.theme-dark .modal-title,body.theme-dark #stores-lbl{color:#F8FAFC}
 body.theme-dark .profile-hero,body.theme-dark .stores-empty,body.theme-dark .new-products-empty,body.theme-dark .cat-card,body.theme-dark .search-box,body.theme-dark .loc-pill{background:linear-gradient(180deg,rgba(15,26,44,.98),rgba(11,20,36,.92));border-color:rgba(148,163,184,.14)}
@@ -2010,42 +1976,6 @@ nav::before{background:linear-gradient(90deg,transparent,rgba(243,53,32,.24),tra
   <div class="modal"><div class="modal-hdr" style="padding-bottom:16px;border-bottom:1px solid var(--border);flex-shrink:0"><div class="modal-title">My Wishlist</div><button class="modal-close" onclick="closeWishModal()"><svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button></div><div class="wish-body" id="wish-body"></div></div>
 </div>
 
-<!-- PROFILE MODAL -->
-<div class="overlay" id="profile-modal" onclick="if(event.target===this)closeProfileModal()">
-  <div class="modal">
-    <div class="profile-hdr">
-      <div class="profile-title-wrap">
-        <div class="profile-title">My Profile</div>
-        <div class="profile-sub">Keep your identity and delivery details polished for a smoother Zorra experience.</div>
-      </div>
-      <button class="modal-close" onclick="closeProfileModal()"><svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
-    </div>
-    <div class="profile-hero">
-      <div id="pm-av" class="profile-avatar"><span id="pm-av-txt">GU</span></div>
-      <div class="profile-identity">
-        <div class="profile-name" id="pm-display-name">Loading…</div>
-        <div class="profile-email" id="pm-display-email"></div>
-        <div class="profile-phone" id="pm-display-phone"></div>
-        <div class="profile-tag">Account Details</div>
-      </div>
-    </div>
-    <div class="profile-form-wrap">
-      <div class="profile-section-title">Edit Profile</div>
-      <div class="form-g"><label class="form-l">Full Name</label><input class="form-i" id="edit-name" placeholder="Your full name"></div>
-      <div class="form-g"><label class="form-l">Email</label><input class="form-i" id="edit-email" type="email" placeholder="you@email.com"></div>
-      <div class="form-g"><label class="form-l">Phone</label><input class="form-i" id="edit-phone" type="tel" placeholder="+91 98765 43210"></div>
-      <div class="profile-section-title" style="margin:18px 0 14px">Delivery Address</div>
-      <div class="form-g"><label class="form-l">Street / Flat / Building</label><input class="form-i" id="edit-addr" placeholder="12B, Rose Apartments, MG Road"></div>
-      <div class="profile-grid">
-        <div class="form-g"><label class="form-l">City</label><input class="form-i" id="edit-city" placeholder="Bangalore"></div>
-        <div class="form-g"><label class="form-l">Pincode</label><input class="form-i" id="edit-pin" placeholder="560001"></div>
-      </div>
-      <div class="form-g"><label class="form-l">Landmark</label><input class="form-i" id="edit-land" placeholder="Near Bus Stand"></div>
-    </div>
-    <div class="profile-footer"><button class="save-btn" onclick="saveProfile()">Save Changes</button><div class="save-ok" id="profile-ok">Changes saved!</div></div>
-  </div>
-</div>
-
 <!-- LOCATION MAP MODAL -->
 <div class="overlay" id="map-modal" onclick="if(event.target===this)closeMapModal()">
   <div class="modal" style="max-width:660px">
@@ -2161,7 +2091,6 @@ function closeOverlayBeforeAuth(){
   if(document.getElementById('delivery-modal').classList.contains('open'))closeDeliveryModal();
   if(document.getElementById('orders-modal').classList.contains('open'))closeOrdersModal();
   if(document.getElementById('wish-modal').classList.contains('open'))closeWishModal();
-  if(document.getElementById('profile-modal').classList.contains('open'))closeProfileModal();
 }
 function switchAuthTab(tab){var login=tab!=='signup';var loginPanel=document.getElementById('auth-panel-login'),signupPanel=document.getElementById('auth-panel-signup'),loginTab=document.getElementById('auth-tab-login'),signupTab=document.getElementById('auth-tab-signup'),kicker=document.getElementById('auth-kicker'),title=document.getElementById('auth-title');if(loginPanel)loginPanel.classList.toggle('active',login);if(signupPanel)signupPanel.classList.toggle('active',!login);if(loginTab)loginTab.classList.toggle('active',login);if(signupTab)signupTab.classList.toggle('active',!login);if(kicker)kicker.textContent=login?'Welcome Back':'Create Account';if(title)title.textContent=login?'Sign in to Zorra':'Create your Zorra account';syncAuthQuery(login?'login':'signup');}
 function openAuthModal(tab){if(isLoggedIn()){var target=getPostAuthDestination();if(target&&target!=='home.html'){window.location.replace(target);}return false;}closeOverlayBeforeAuth();var modal=document.getElementById('auth-modal');switchAuthTab(tab||'login');if(modal)modal.classList.add('open');document.body.style.overflow='hidden';setTimeout(function(){var field=document.getElementById(tab==='signup'?'auth-signup-name':'auth-login-email');if(field)field.focus();},60);return false;}
@@ -2517,7 +2446,7 @@ function handleNavCartClick(){_cartRequested=true;updateCartUI();openCartModal()
 function loadCurrentUser(){var raw=ld('ls_user_data');if(raw){try{_currentUser=JSON.parse(raw);}catch(e){_currentUser=null;}}updateNavProfileBtn();updateAuthUI();}
 function updateNavProfileBtn(){var lbl=document.getElementById('nav-profile-lbl');var av=document.getElementById('nav-av');if(_currentUser&&_currentUser.name){var init=(_currentUser.name||'U').split(' ').map(function(w){return w[0];}).join('').slice(0,2).toUpperCase();av.innerHTML='<span style="font-size:.72rem;font-weight:800;color:#fff;font-family:var(--ff)">'+init+'</span>';}else{av.innerHTML='<svg style="width:14px;height:14px;stroke:#fff;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round" viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>';}lbl.textContent=t('nav_account');}
 function updateAuthUI(){var loggedIn=isLoggedIn();document.body.classList.toggle('guest-mode',!loggedIn);document.body.classList.toggle('signed-in-mode',loggedIn);var logoutBtn=document.getElementById('settings-logout-btn');if(logoutBtn)logoutBtn.style.display=loggedIn?'flex':'none';var settingsSub=document.getElementById('settings-sub');if(settingsSub)settingsSub.textContent=loggedIn?t('settings_sub'):'Change theme and language while you browse. Sign in from the top bar for orders, wishlist, and checkout.';var guestLogin=document.getElementById('guest-login-link'),guestSignup=document.getElementById('guest-signup-link');if(guestLogin)guestLogin.href=buildAuthUrl('login');if(guestSignup)guestSignup.href=buildAuthUrl('signup');}
-function handleProfileClick(){if(!isLoggedIn())return requireLogin('Please sign in to view your account.');openProfileModal();}
+function handleProfileClick(){location.href='account.html';}
 function clearAuthState(){_currentUser=null;try{localStorage.setItem('ls_force_login','true');localStorage.removeItem('ls_logged_in');localStorage.removeItem('ls_user_data');}catch(e){}updateNavProfileBtn();updateAuthUI();}
 function doLogout(){if(!confirm('Sign out of Zorra?'))return;clearAuthState();closeProfileModal();closeSettingsPanel();toast('Signed out. You can keep browsing as a guest.','info');auth.signOut().catch(function(){}).finally(function(){setTimeout(function(){window.location.replace('home.html');},300);});}
 
@@ -4030,12 +3959,6 @@ function startLiveTracking(order){
   window._trackUnsub=unsub;
 }
 function stopLiveTracking(){if(_trackInterval){clearInterval(_trackInterval);_trackInterval=null;}if(window._trackUnsub){try{window._trackUnsub();}catch(e){}window._trackUnsub=null;}}
-
-// ====== PROFILE ======
-function openProfileModal(){closeSettingsPanel();loadProfileModal();document.getElementById('profile-modal').classList.add('open');document.body.style.overflow='hidden';}
-function closeProfileModal(){document.getElementById('profile-modal').classList.remove('open');document.body.style.overflow='';}
-function loadProfileModal(){var name=(_currentUser&&_currentUser.name)||ld('ls_name')||'';var email=(_currentUser&&_currentUser.email)||ld('ls_email')||'';var phone=(_currentUser&&_currentUser.phone)||ld('ls_phone')||'';var init=name?name.split(' ').map(function(w){return w[0];}).join('').slice(0,2).toUpperCase():'';document.getElementById('pm-av-txt').textContent=init||'GU';document.getElementById('pm-display-name').textContent=name||'Guest User';document.getElementById('pm-display-email').textContent=email||'No email';document.getElementById('pm-display-phone').textContent=phone?phone:'';document.getElementById('edit-name').value=name;document.getElementById('edit-email').value=email;document.getElementById('edit-phone').value=phone;document.getElementById('edit-addr').value=ld('ls_del_addr1');document.getElementById('edit-city').value=ld('ls_del_city');document.getElementById('edit-pin').value=ld('ls_del_pin');document.getElementById('edit-land').value=ld('ls_del_land');}
-async function saveProfile(){var name=document.getElementById('edit-name').value.trim(),email=document.getElementById('edit-email').value.trim(),phone=document.getElementById('edit-phone').value.trim().replace(/\D/g,'');var addr=document.getElementById('edit-addr').value.trim(),city=document.getElementById('edit-city').value.trim(),pin=document.getElementById('edit-pin').value.trim(),land=document.getElementById('edit-land').value.trim();if(!name){toast('Please enter your name','err');return;}if(email&&!emailValid(email)){toast('Enter a valid email address','err');return;}if(phone&&!mobileValid(phone)){toast('Enter a valid 10-digit mobile number','err');return;}if(pin&&!/^\d{6}$/.test(pin)){toast('Enter a valid 6-digit PIN code','err');return;}sv('ls_name',name);sv('ls_email',email);sv('ls_phone',phone);sv('ls_del_addr1',addr);sv('ls_del_city',city);sv('ls_del_pin',pin);sv('ls_del_land',land);if(_currentUser){_currentUser.name=name;_currentUser.email=email;_currentUser.phone=phone;sv('ls_user_data',JSON.stringify(_currentUser));}try{if(auth.currentUser){await db.collection('users').doc(auth.currentUser.uid).set({name:name,email:email||auth.currentUser.email||'',phoneNumber:phone,addresses:addr?[{address:addr,city:city,pin:pin,landmark:land,isDefault:true}]:[],lastLogin:new Date().toISOString()},{merge:true});}loadProfileModal();updateNavProfileBtn();var ok=document.getElementById('profile-ok');ok.classList.add('show');setTimeout(function(){ok.classList.remove('show');},3000);toast('Profile saved');}catch(e){toast('Profile saved on this device, but cloud sync failed: '+e.message,'err');}}
 
 // ====== LOCATION MAP ======
 function makeOrangeIcon(){return L.divIcon({className:'',html:'<div style="width:16px;height:16px;background:#FF6B1A;border:3px solid #fff;border-radius:50%;box-shadow:0 2px 10px rgba(255,107,26,.55)"></div>',iconSize:[16,16],iconAnchor:[8,8],popupAnchor:[0,-12]});}
