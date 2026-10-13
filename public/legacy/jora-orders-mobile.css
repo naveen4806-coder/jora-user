@@ -1,0 +1,25 @@
+@media (max-width: 767px) {
+  .jora-orders-filter-toggle {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: .45rem;
+    min-height: 44px;
+    margin: .75rem 0 0;
+    padding: .65rem 1rem;
+    border: 1px solid var(--jora-border, #d7e2da);
+    border-radius: .8rem;
+    background: var(--jora-card, #fff);
+    color: var(--jora-text, #18251d);
+    font: inherit;
+    font-weight: 700;
+    cursor: pointer;
+  }
+
+  .jora-orders-filter { display: none !important; }
+  .jora-orders-filter.is-open { display: grid !important; margin-top: .75rem; }
+}
+
+@media (min-width: 768px) {
+  .jora-orders-filter-toggle { display: none; }
+}
