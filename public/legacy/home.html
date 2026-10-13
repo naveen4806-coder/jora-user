@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <style id="jora-first-paint">html{background:#101B14}html.jora-home-booting body{opacity:0!important;pointer-events:none!important}</style>
-<script>(function(){document.documentElement.classList.add('jora-home-booting');window.joraRevealHome=function(){document.documentElement.classList.remove('jora-home-booting');};setTimeout(window.joraRevealHome,8000);})();</script>
+<script>(function(){document.documentElement.classList.add('jora-home-booting');window.joraRevealHome=function(){document.documentElement.classList.remove('jora-home-booting');};window.addEventListener('load',window.joraRevealHome,{once:true});})();</script>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1.0">
   <meta name="description" content="Jora is a local shopping and delivery platform connecting nearby buyers and sellers.">
