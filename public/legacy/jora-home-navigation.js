@@ -5,10 +5,11 @@
     var css=document.createElement('link');css.rel='stylesheet';css.href='jora-shell.css';document.head.appendChild(css);
     var interactions=document.createElement('link');interactions.rel='stylesheet';interactions.href='jora-interactions.css';document.head.appendChild(interactions);
     var legacyFix=document.createElement('link');legacyFix.rel='stylesheet';legacyFix.href='jora-navigation-fix.css';document.head.appendChild(legacyFix);
+    var stability=document.createElement('link');stability.rel='stylesheet';stability.href='jora-mobile-stability.css';document.head.appendChild(stability);
     var font=document.createElement('link');font.rel='stylesheet';font.href='https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Serif:wght@600;700&display=swap';document.head.appendChild(font);
     var nav=document.createElement('div');nav.id='jora-shell-nav';nav.innerHTML='<nav class="jora-bottomnav" aria-label="Primary"><a href="home.html" data-icon="⌂" aria-current="page">Home</a><a href="shops.html" data-icon="▦">Shops</a><a href="products.html" data-icon="□">Products</a><a href="account.html" data-icon="◉">Account</a><a href="settings.html" data-icon="⚙">Settings</a></nav><header class="jora-topbar"><a class="jora-brand" href="home.html">Jora</a><nav class="jora-toplinks"><a href="home.html" aria-current="page">Home</a><a href="shops.html">Shops</a><a href="products.html">Products</a><a href="account.html">Account</a><a href="settings.html">Settings</a></nav></header>';
     document.body.appendChild(nav);hideLegacyNavigation();
-    new MutationObserver(hideLegacyNavigation).observe(document.body,{childList:true,subtree:true});setInterval(hideLegacyNavigation,250);
+    new MutationObserver(hideLegacyNavigation).observe(document.body,{childList:true,subtree:true});
     ['new-products-section','shop-products-panel','nearby-products-grid'].forEach(function(id){var el=document.getElementById(id);if(el)el.classList.add('jora-home-only-products')});
     var legacyOpenOrders=window.openOrdersModal;
     var params=new URLSearchParams(window.location.search);

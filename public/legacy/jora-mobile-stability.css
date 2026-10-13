@@ -1,0 +1,12 @@
+/* Prevent loading-time horizontal movement on narrow screens. */
+html,body{max-width:100%;overflow-x:clip}
+@media(max-width:760px){
+  img,video,canvas,svg{height:auto;max-width:100%}
+  .nav-download-app,.nav-refresh-btn{display:none!important}
+  .nav-float-wrap,.nav-float-wrap nav,.page,.stores-sec,.stores-grid,.banner-gallery,.modal-card,.checkout-card{max-width:100%!important}
+  .nav-float-wrap nav{min-width:0!important;overflow:hidden!important}
+  .stores-sec .stores-grid,.stores-sec .stores-grid.single-store{grid-template-columns:repeat(2,minmax(0,1fr))!important}
+  .stores-sec .stores-grid .store-card,.stores-sec .stores-grid.single-store .store-card{grid-template-columns:1fr!important;grid-template-rows:auto auto auto!important;min-height:0!important;gap:0!important;padding:0!important}
+  .stores-sec .stores-grid .store-icon{width:100%!important;height:92px!important;min-height:92px!important;border-radius:14px 14px 0 0!important}
+  .stores-sec .stores-grid .store-name,.stores-sec .stores-grid .store-meta,.stores-sec .stores-grid .store-foot{padding-left:10px!important;padding-right:10px!important}
+}
