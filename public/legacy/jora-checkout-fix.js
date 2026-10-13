@@ -55,6 +55,31 @@
     save('ls_del_phone', phone);
   }
 
+  var waitingForAuth = false;
+  var originalCheckout = window.checkoutCart;
+  if (typeof originalCheckout === 'function') {
+    window.checkoutCart = function () {
+      if (window._joraAuthResolved === false) {
+        if (!waitingForAuth) {
+          waitingForAuth = true;
+          notify('Restoring your signed-in session…', 'info');
+          var tries = 0;
+          var timer = setInterval(function () {
+            tries++;
+            if (window._joraAuthResolved || tries >= 40) {
+              clearInterval(timer);
+              waitingForAuth = false;
+              if (window._joraAuthResolved) window.checkoutCart();
+              else notify('Could not restore your session. Please refresh and try again.');
+            }
+          }, 125);
+        }
+        return;
+      }
+      return originalCheckout.apply(this, arguments);
+    };
+  }
+
   window.confirmOrder = async function () {
     if (placingOrder) return;
     if (!window.auth || !window.auth.currentUser) {
