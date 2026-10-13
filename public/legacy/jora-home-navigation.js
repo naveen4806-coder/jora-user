@@ -1,5 +1,5 @@
 (function(){
-  function hideLegacyNavigation(){document.querySelectorAll('#jora-bottom-nav').forEach(function(legacy){legacy.remove()})}
+  function hideLegacyNavigation(){document.querySelectorAll('#jora-bottom-nav,.mobile-nav-shortcuts').forEach(function(legacy){legacy.remove()})}
   function add(){
     if(document.getElementById('jora-shell-nav')){hideLegacyNavigation();return}
     var css=document.createElement('link');css.rel='stylesheet';css.href='jora-shell.css';document.head.appendChild(css);

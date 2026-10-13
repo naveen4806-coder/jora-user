@@ -1,3 +1,4 @@
 /* The legacy page injects #jora-bottom-nav. The new shell uses .jora-bottomnav. */
 #jora-bottom-nav{display:none!important}
 .zorra-album-spotlight{display:none!important}
+.mobile-nav-shortcuts{display:none!important}
