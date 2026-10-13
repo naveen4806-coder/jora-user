@@ -55,6 +55,17 @@
     save('ls_del_phone', phone);
   }
 
+  function clearPersistedCart() {
+    var empty = JSON.stringify({ shopId: null, shopName: '', items: [] });
+    try {
+      localStorage.setItem('ls_cart', empty);
+      localStorage.setItem('ls_cart_guest', empty);
+      if (window.auth && window.auth.currentUser) localStorage.setItem('ls_cart_user_' + window.auth.currentUser.uid, empty);
+    } catch (error) {
+      console.warn('Cart could not be persisted as empty', error);
+    }
+  }
+
   var waitingForAuth = false;
   var originalCheckout = window.checkoutCart;
   if (typeof originalCheckout === 'function') {
@@ -91,6 +102,10 @@
     var shop = pending && pending.shop;
     if (!cart || !Array.isArray(cart.items) || !cart.items.length) {
       notify('Your cart is empty. Add an item before placing an order.');
+      return;
+    }
+    if (cart.items.some(function (item) { return !item || !item.productId || !(Number(item.qty) > 0) || !(Number(item.price) >= 0); })) {
+      notify('Your cart contains an invalid item. Please review it and try again.');
       return;
     }
     if (!shop) {
@@ -183,12 +198,13 @@
 
       persistDelivery(address, city, pin, landmark, phone);
       window._cart = { shopId: null, shopName: '', items: [] };
+      clearPersistedCart();
       if (typeof window.updateCartUI === 'function') window.updateCartUI();
       if (typeof window.updateNavBadges === 'function') window.updateNavBadges();
       if (typeof window.closeDeliveryModal === 'function') window.closeDeliveryModal();
       window._pendingOrder = null;
       notify('Order placed successfully.', 'ok');
-      window.location.replace('home.html?openOrders=1&legacyTracking=1&trackOrder=' + encodeURIComponent(result.id));
+      window.location.replace('tracking.html?id=' + encodeURIComponent(result.id));
     } catch (error) {
       console.error('Order create failed', error);
       var message = error && error.code === 'permission-denied'
