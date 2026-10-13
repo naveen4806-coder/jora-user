@@ -3,6 +3,7 @@
 html,
 body,
 #root,
+.legacy-frame-shell,
 .legacy-page {
   width: 100%;
   min-width: 0;
@@ -13,7 +14,50 @@ body,
   border: 0;
 }
 
+.legacy-frame-shell {
+  position: relative;
+  overflow: hidden;
+  background: #101b14;
+}
+
 .legacy-page {
   display: block;
   background: #07160d;
+  opacity: 0;
+  transition: opacity 160ms ease;
+}
+
+.legacy-page.is-ready {
+  opacity: 1;
+}
+
+.legacy-frame-loader {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  display: grid;
+  place-content: center;
+  gap: .7rem;
+  color: #dff7e6;
+  font: 700 .85rem/1.2 Arial, sans-serif;
+  letter-spacing: .04em;
+  text-align: center;
+  background: radial-gradient(circle at 50% 42%, #1f3928, #101b14 62%);
+}
+
+.legacy-loader-mark {
+  display: grid;
+  width: 3.25rem;
+  height: 3.25rem;
+  margin: 0 auto;
+  place-items: center;
+  border: 2px solid #2ecc71;
+  border-radius: 1rem;
+  color: #2ecc71;
+  font: 900 1.55rem/1 Georgia, serif;
+  animation: jora-loader-pulse 1s ease-in-out infinite alternate;
+}
+
+@keyframes jora-loader-pulse {
+  to { transform: scale(1.07); box-shadow: 0 0 0 8px rgba(46, 204, 113, .09); }
 }
