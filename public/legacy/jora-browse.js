@@ -93,7 +93,14 @@
   }
   function realCatalog(items) {
     return (Array.isArray(items) ? items : []).filter(function (item) {
-      return item && String(item.id || '').indexOf('sample-') !== 0 && String(item.shopId || '').indexOf('sample-') !== 0;
+      if (!item) return false;
+      var id = String(item.id || '').toLowerCase();
+      var shopId = String(item.shopId || '').toLowerCase();
+      var name = String(item.name || '').toLowerCase();
+      var description = String(item.description || '').toLowerCase();
+      return id.indexOf('sample-') !== 0 && shopId.indexOf('sample-') !== 0 &&
+        name.indexOf('jora demo ') !== 0 && name.indexOf('demo ') !== 0 &&
+        description.indexOf('jora demo') === -1;
     });
   }
   function localCatalog() { return realCatalog(S.read(cacheKey, [])); }
