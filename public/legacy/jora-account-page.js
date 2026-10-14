@@ -29,7 +29,8 @@
       '<div class="jora-empty"><p>You are browsing as a guest.</p><a class="jora-button" href="home.html?auth=login&return=account.html">Sign in</a></div></main>';
   }
   function profileAvatar(avatar, label, email) {
-    return avatar ? '<img src="' + esc(avatar) + '" alt="Profile picture">' : '<span>' + esc(initials(label, email)) + '</span>';
+    return '<span class="jora-avatar-fallback">' + esc(initials(label, email)) + '</span>' +
+      (avatar ? '<img class="jora-avatar-image" src="' + esc(avatar) + '" alt="Profile picture">' : '');
   }
   function form(user, profile) {
     var avatar = profile.avatar_url || '';
@@ -76,6 +77,13 @@
     var openButton = document.getElementById('open-profile-form');
     var cancelButton = document.getElementById('cancel-profile');
     var selected = null;
+    function renderAvatar(avatarUrl, name) {
+      var container = document.getElementById('account-avatar');
+      container.innerHTML = profileAvatar(avatarUrl || '', name || user.email, user.email);
+      var picture = container.querySelector('.jora-avatar-image');
+      if (picture) picture.addEventListener('error', function () { picture.remove(); });
+    }
+    renderAvatar(profile.avatar_url, profile.full_name || user.email);
     function setEditMode(open) {
       form.hidden = !open;
       form.setAttribute('aria-hidden', String(!open));
@@ -90,7 +98,7 @@
     cancelButton.onclick = function () {
       selected = null;
       image.value = '';
-      document.getElementById('account-avatar').innerHTML = profileAvatar(profile.avatar_url || '', profile.full_name || user.email, user.email);
+      renderAvatar(profile.avatar_url, profile.full_name || user.email);
       setEditMode(false);
     };
     image.onchange = function () {
@@ -104,7 +112,7 @@
       }
       var reader = new FileReader();
       reader.onload = function () {
-        document.getElementById('account-avatar').innerHTML = '<img src="' + esc(reader.result) + '" alt="Selected profile picture">';
+        renderAvatar(reader.result, document.getElementById('profile-name').value.trim() || user.email);
       };
       reader.readAsDataURL(selected);
       notice('Picture selected. Save Profile to upload it.', 'success');
@@ -132,7 +140,7 @@
         profile = Object.assign({}, profile, { full_name: name, phone: phone, address: address, avatar_url: avatarUrl });
         selected = null;
         document.getElementById('account-summary-name').textContent = name;
-        document.getElementById('account-avatar').innerHTML = profileAvatar(avatarUrl || '', name, user.email);
+        renderAvatar(avatarUrl, name);
         setEditMode(false);
         notice('Your account details were saved.', 'success');
       } catch (error) {
