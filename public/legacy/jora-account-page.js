@@ -8,10 +8,12 @@
     return text.split(/\s+/).slice(0, 2).map(function (part) { return part.charAt(0).toUpperCase(); }).join('') || 'J';
   }
   function notice(message, type) {
-    var el = document.getElementById('account-note');
-    if (!el) return;
-    el.textContent = message;
-    el.className = 'jora-checkout-note' + (type ? ' is-' + type : '');
+    ['account-note', 'account-summary-note'].forEach(function (id) {
+      var el = document.getElementById(id);
+      if (!el) return;
+      el.textContent = message;
+      el.className = 'jora-checkout-note' + (type ? ' is-' + type : '');
+    });
   }
   function links() {
     return '<nav class="jora-menu" aria-label="Account options">' +
@@ -34,20 +36,20 @@
     var label = profile.full_name || user.email || 'Jora customer';
     app.innerHTML = JoraShell.nav('account') +
       '<main class="jora-page jora-account-page">' +
-        '<section class="jora-hero jora-account-hero"><div><p class="jora-eyebrow">Account</p><h1>My Profile</h1><p>Keep your delivery details and profile photo up to date.</p></div><a class="jora-button jora-profile-anchor" href="#my-profile">My Profile</a></section>' +
+        '<section class="jora-hero jora-account-hero"><div><p class="jora-eyebrow">Account</p><h1>My Profile</h1><p>Keep your delivery details and profile photo up to date.</p></div><button class="jora-button jora-profile-anchor" id="open-profile-form" type="button" aria-controls="account-form" aria-expanded="false">My Profile</button></section>' +
         '<section class="jora-card jora-account-card" id="my-profile" tabindex="-1">' +
           '<div class="jora-account-card-heading"><div><p class="jora-eyebrow">Profile details</p><h2>Personal information</h2><p>Used for delivery updates and order support.</p></div></div>' +
           '<div class="jora-account-summary"><div class="jora-account-avatar" id="account-avatar">' + profileAvatar(avatar, label, user.email) + '</div>' +
-            '<div class="jora-account-identity"><h3>' + esc(label) + '</h3><p>' + esc(user.email || profile.email) + '</p>' +
-              '<label class="jora-upload-label"><span>Upload profile photo</span><small>PNG, JPG or WebP · up to 5 MB</small><input id="profile-image" type="file" accept="image/png,image/jpeg,image/webp" hidden></label>' +
-            '</div>' +
+            '<div class="jora-account-identity"><h3 id="account-summary-name">' + esc(label) + '</h3><p>' + esc(user.email || profile.email) + '</p><p class="jora-profile-hint">Tap My Profile to update your details.</p><p id="account-summary-note" class="jora-checkout-note" aria-live="polite"></p></div>' +
           '</div>' +
-          '<form id="account-form" class="jora-form jora-account-form">' +
+          '<form id="account-form" class="jora-form jora-account-form" hidden aria-hidden="true">' +
+            '<div class="jora-form-intro"><h3>Edit your profile</h3><p>Update your details, then save when you are ready.</p></div>' +
+            '<label class="jora-upload-label"><span>Upload profile photo</span><small>PNG, JPG or WebP · up to 5 MB</small><input id="profile-image" type="file" accept="image/png,image/jpeg,image/webp" hidden></label>' +
             '<label>Full name<input id="profile-name" required maxlength="120" autocomplete="name" value="' + esc(profile.full_name) + '"></label>' +
             '<label>Email address<input id="profile-email" type="email" value="' + esc(user.email || profile.email) + '" readonly aria-describedby="profile-email-note"><small id="profile-email-note">Email changes are handled through Supabase authentication separately.</small></label>' +
             '<label>Mobile number<input id="profile-phone" inputmode="tel" autocomplete="tel" maxlength="15" value="' + esc(profile.phone) + '" placeholder="9876543210"></label>' +
             '<label>Delivery address<textarea id="profile-address" rows="3" autocomplete="street-address" maxlength="500" placeholder="Flat, street, area, city and PIN code">' + esc(profile.address) + '</textarea></label>' +
-            '<p id="account-note" class="jora-checkout-note" aria-live="polite"></p><button class="jora-button" id="save-profile" type="submit">Save Profile</button>' +
+            '<p id="account-note" class="jora-checkout-note" aria-live="polite"></p><div class="jora-form-actions"><button class="jora-button" id="save-profile" type="submit">Save Profile</button><button class="jora-text-button" id="cancel-profile" type="button">Cancel</button></div>' +
           '</form>' +
         '</section>' + links() +
       '</main>';
@@ -70,7 +72,27 @@
   }
   function bind(api, user, profile) {
     var image = document.getElementById('profile-image');
+    var form = document.getElementById('account-form');
+    var openButton = document.getElementById('open-profile-form');
+    var cancelButton = document.getElementById('cancel-profile');
     var selected = null;
+    function setEditMode(open) {
+      form.hidden = !open;
+      form.setAttribute('aria-hidden', String(!open));
+      openButton.setAttribute('aria-expanded', String(open));
+      if (!open) return;
+      window.requestAnimationFrame(function () {
+        form.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        document.getElementById('profile-name').focus({ preventScroll: true });
+      });
+    }
+    openButton.onclick = function () { setEditMode(true); };
+    cancelButton.onclick = function () {
+      selected = null;
+      image.value = '';
+      document.getElementById('account-avatar').innerHTML = profileAvatar(profile.avatar_url || '', profile.full_name || user.email, user.email);
+      setEditMode(false);
+    };
     image.onchange = function () {
       selected = image.files && image.files[0] || null;
       if (!selected) return;
@@ -87,7 +109,7 @@
       reader.readAsDataURL(selected);
       notice('Picture selected. Save Profile to upload it.', 'success');
     };
-    document.getElementById('account-form').onsubmit = async function (event) {
+    form.onsubmit = async function (event) {
       event.preventDefault();
       var button = document.getElementById('save-profile');
       var name = document.getElementById('profile-name').value.trim();
@@ -109,6 +131,9 @@
         if (saved.error) throw saved.error;
         profile = Object.assign({}, profile, { full_name: name, phone: phone, address: address, avatar_url: avatarUrl });
         selected = null;
+        document.getElementById('account-summary-name').textContent = name;
+        document.getElementById('account-avatar').innerHTML = profileAvatar(avatarUrl || '', name, user.email);
+        setEditMode(false);
         notice('Your account details were saved.', 'success');
       } catch (error) {
         console.error('Profile save failed', error);
