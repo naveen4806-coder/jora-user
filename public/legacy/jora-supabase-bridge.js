@@ -6,7 +6,7 @@
 (function () {
   'use strict';
   var client = null, initPromise = null, listeners = [], authListeners = [], currentUser = null;
-  var configWaiters = [], configured = false;
+  var configWaiters = [], configured = false, configError = null;
 
   function emitAuth(user) { currentUser = user; authListeners.slice().forEach(function (fn) { try { fn(user); } catch (error) { console.error('Auth listener failed', error); } }); }
   function firebaseError(error) {
@@ -19,7 +19,24 @@
     if (!user) return null;
     return { uid: user.id, email: user.email || '', displayName: (user.user_metadata && user.user_metadata.full_name) || '', getIdToken: function () { return client.auth.getSession().then(function (result) { return result.data.session && result.data.session.access_token || ''; }); } };
   }
-  function waitForConfig() { return configured ? Promise.resolve(client) : new Promise(function (resolve, reject) { configWaiters.push({ resolve: resolve, reject: reject }); }); }
+  function configUnavailable() {
+    var error = new Error('Jora could not connect to its secure account service. Please reload and try again.');
+    error.code = 'jora/supabase-not-configured';
+    return error;
+  }
+  function waitForConfig() {
+    if (configured) return Promise.resolve(client);
+    if (configError) return Promise.reject(configError);
+    return new Promise(function (resolve, reject) {
+      var timeout = setTimeout(function () {
+        var index = configWaiters.indexOf(entry);
+        if (index >= 0) configWaiters.splice(index, 1);
+        reject(configUnavailable());
+      }, 10000);
+      var entry = { resolve: function (api) { clearTimeout(timeout); resolve(api); }, reject: function (error) { clearTimeout(timeout); reject(error); } };
+      configWaiters.push(entry);
+    });
+  }
   function configure(config) {
     if (configured || !config || !config.url || !config.key) return;
     configured = true;
@@ -32,6 +49,8 @@
       configWaiters.splice(0).forEach(function (entry) { entry.resolve(client); });
       return client;
     }).catch(function (error) {
+      configured = false;
+      configError = error;
       configWaiters.splice(0).forEach(function (entry) { entry.reject(error); });
       console.error('Unable to initialise Jora Supabase', error);
     });
@@ -40,7 +59,22 @@
     if (event.origin !== window.location.origin || !event.data || event.data.type !== 'jora:supabase-config') return;
     configure(event.data);
   });
+  // In the React shell the parent sends this configuration by postMessage.
+  // A direct /legacy/*.html visit has no shell, so load the build-generated
+  // public config file as a reliable fallback.
+  function configureRuntimeFallback() {
+    if (window.__JORA_SUPABASE_CONFIG__) configure(window.__JORA_SUPABASE_CONFIG__);
+    if (configured || document.querySelector('script[data-jora-supabase-runtime]')) return;
+    var runtime = document.createElement('script');
+    runtime.src = 'jora-supabase-runtime-config.js';
+    runtime.async = true;
+    runtime.dataset.joraSupabaseRuntime = 'true';
+    runtime.onload = function () { configure(window.__JORA_SUPABASE_CONFIG__); };
+    runtime.onerror = function () { console.error('Jora Supabase runtime config could not be loaded.'); };
+    document.head.appendChild(runtime);
+  }
   try { window.parent.postMessage({ type: 'jora:supabase-config-request' }, window.location.origin); } catch (_) {}
+  configureRuntimeFallback();
 
   function tableFor(name) { return { users: 'profiles', orders: 'orders', shops: 'shops', products: 'products', notifications: 'notifications', admin_banners: 'admin_banners', admin_offers: 'admin_offers', categories: 'categories' }[name] || name; }
   function fieldFor(table, field) {
@@ -129,7 +163,7 @@
     get currentUser() { return currentUser; },
     onAuthStateChanged: function (callback) { authListeners.push(callback); if (configured) setTimeout(function () { callback(currentUser); }, 0); return function () { authListeners = authListeners.filter(function (item) { return item !== callback; }); }; },
     signInWithEmailAndPassword: function (email, password) { return waitForConfig().then(function (api) { return api.auth.signInWithPassword({ email: email, password: password }); }).then(function (result) { if (result.error) throw firebaseError(result.error); return { user: wrapUser(result.data.user) }; }); },
-    createUserWithEmailAndPassword: function (email, password) { return waitForConfig().then(function (api) { var metadata = { full_name: localStorage.getItem('jora_pending_signup_name') || '' }; return api.auth.signUp({ email: email, password: password, options: { data: metadata } }); }).then(function (result) { if (result.error) throw firebaseError(result.error); return { user: wrapUser(result.data.user) }; }); },
+    createUserWithEmailAndPassword: function (email, password) { return waitForConfig().then(function (api) { var metadata = { full_name: localStorage.getItem('jora_pending_signup_name') || '' }; return api.auth.signUp({ email: email, password: password, options: { data: metadata } }); }).then(function (result) { if (result.error) throw firebaseError(result.error); return { user: wrapUser(result.data.user), needsEmailConfirmation: !!(result.data.user && !result.data.session) }; }); },
     signOut: function () { return waitForConfig().then(function (api) { return api.auth.signOut(); }).then(function (result) { if (result.error) throw firebaseError(result.error); }); }
   };
   function firestore() { return { collection: function (name) { return new Collection(name); } }; }
