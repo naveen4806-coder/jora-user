@@ -1,6 +1,6 @@
 (function () {
   'use strict';
-  var cfg = { apiKey: 'AIzaSyCxNdOs69QAD-1FTIDVyf0N0N2YGqWNgOo', authDomain: 'nexcart-db-7a02f.firebaseapp.com', projectId: 'nexcart-db-7a02f', storageBucket: 'nexcart-db-7a02f.firebasestorage.app', messagingSenderId: '868851396316', appId: '1:868851396316:web:951e1988f3f2e4b065ce19' };
+  var cfg = {};
   var S = window.JoraShell, placing = false, user = null, shop = null, deliveryMap = null, deliveryMarker = null, deliveryLat = null, deliveryLng = null;
   function empty() { return { shopId: null, shopName: '', items: [] }; }
   function cart() { var saved = S.read('ls_cart', null) || S.read('ls_cart_guest', empty()); return saved && Array.isArray(saved.items) ? saved : empty(); }

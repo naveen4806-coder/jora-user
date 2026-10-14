@@ -1,5 +1,5 @@
 (function(){
-  var cfg={apiKey:'AIzaSyCxNdOs69QAD-1FTIDVyf0N0N2YGqWNgOo',authDomain:'nexcart-db-7a02f.firebaseapp.com',projectId:'nexcart-db-7a02f',storageBucket:'nexcart-db-7a02f.firebasestorage.app',messagingSenderId:'868851396316',appId:'1:868851396316:web:951e1988f3f2e4b065ce19'},all=[],state={query:'',status:'all',time:'all',filtersOpen:false},unsubscribeOrders=null;
+  var cfg={},all=[],state={query:'',status:'all',time:'all',filtersOpen:false},unsubscribeOrders=null;
   function esc(v){return JoraShell.esc(v)}
   function when(v){try{var d=v&&v.toDate?v.toDate():new Date(v);return isNaN(d)?'':d.toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'})}catch(e){return''}}
   function timestamp(o){var d=o.orderedAt||o.createdAt||o.updatedAt;return d&&d.toDate?d.toDate().getTime():new Date(d||0).getTime()}

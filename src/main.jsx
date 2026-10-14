@@ -18,9 +18,33 @@ function LegacyFrame() {
     return () => window.removeEventListener('popstate', onPopState);
   }, []);
   React.useEffect(() => setReady(false), [page]);
+  React.useEffect(() => {
+    const config = {
+      type: 'jora:supabase-config',
+      url: import.meta.env.VITE_SUPABASE_URL || '',
+      key: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY || ''
+    };
+    const sendConfig = (target) => {
+      if (config.url && config.key && target) target.postMessage(config, window.location.origin);
+    };
+    const onMessage = (event) => {
+      if (event.origin !== window.location.origin || event.data?.type !== 'jora:supabase-config-request') return;
+      sendConfig(event.source);
+    };
+    window.addEventListener('message', onMessage);
+    const frame = document.querySelector('.legacy-page');
+    if (frame?.contentWindow) sendConfig(frame.contentWindow);
+    return () => window.removeEventListener('message', onMessage);
+  }, [page]);
+  const onLoad = (event) => {
+    setReady(true);
+    const url = import.meta.env.VITE_SUPABASE_URL || '';
+    const key = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY || '';
+    if (url && key) event.currentTarget.contentWindow?.postMessage({ type: 'jora:supabase-config', url, key }, window.location.origin);
+  };
   return <div className="legacy-frame-shell" aria-busy={!ready}>
     {!ready && <div className="legacy-frame-loader" aria-label="Loading Jora"><span className="legacy-loader-mark">J</span><span>Loading Jora</span></div>}
-    <iframe className={`legacy-page${ready ? ' is-ready' : ''}`} title="Jora" src={`/legacy/${page}${window.location.search}${window.location.hash}`} allow="autoplay; clipboard-write" onLoad={() => setReady(true)} />
+    <iframe className={`legacy-page${ready ? ' is-ready' : ''}`} title="Jora" src={`/legacy/${page}${window.location.search}${window.location.hash}`} allow="autoplay; clipboard-write" onLoad={onLoad} />
   </div>;
 }
 
