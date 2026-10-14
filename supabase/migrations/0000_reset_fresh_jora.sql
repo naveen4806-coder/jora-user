@@ -1,5 +1,6 @@
 -- WARNING: Run only for a genuinely empty/fresh Jora Supabase project.
 -- This permanently deletes the listed Jora tables and their contents.
+drop trigger if exists on_auth_user_created on auth.users;
 drop table if exists public.notifications cascade;
 drop table if exists public.product_reviews cascade;
 drop table if exists public.wishlists cascade;
