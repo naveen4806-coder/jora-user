@@ -439,8 +439,7 @@ border:1px solid rgba(255,255,255,.7);box-shadow:var(--sh-lg);backdrop-filter:bl
 .se-ic{position:relative;font-size:2.8rem;margin-bottom:14px}
 .se-t{position:relative;font-family:var(--fb);font-size:1.18rem;font-weight:800;color:#172033;margin-bottom:7px;letter-spacing:-.04em;line-height:1.05}
 .se-s{position:relative;font-size:.88rem;color:var(--mid);line-height:1.6}
-.stores-empty .se-link{background:none;border:none;color:var(--orange-dark);font-weight:700;cursor:pointer;font-family:inherit;font-size:inherit;padding:0}
-.stores-empty .se-link:hover{text-decoration:underline}
+.stores-empty .se-link{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:44px;margin-top:14px;padding:0 16px;border:1px solid #16A34A;border-radius:12px;background:#16A34A;color:#fff;font-family:var(--fb);font-size:.82rem;font-weight:800;cursor:pointer;box-shadow:0 5px 0 #107A3D,0 11px 20px rgba(22,163,74,.22);transition:transform .16s ease,box-shadow .16s ease,background .16s ease}.stores-empty .se-link:hover{background:#15803D;transform:translateY(-2px);box-shadow:0 7px 0 #107A3D,0 14px 24px rgba(22,163,74,.25)}.stores-empty .se-link:active{transform:translateY(3px);box-shadow:0 2px 0 #107A3D,0 5px 10px rgba(22,163,74,.2)}.stores-empty .se-link svg{width:17px;height:17px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
 
 /* ===== NEW PRODUCTS ===== */
 .new-products-section{margin-top:38px;margin-bottom:44px;padding:28px 24px 24px;border-radius:calc(var(--r-2xl) + 8px);background:
@@ -1713,7 +1712,7 @@ nav::before{background:linear-gradient(90deg,transparent,rgba(243,53,32,.24),tra
 <div class="search-bar">
   <div class="search-wrap">
     <div class="search-row">
-      <button class="loc-btn" id="loc-btn" onclick="openMapModal()"><svg viewBox="0 0 24 24"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z"/><circle cx="12" cy="9" r="2.5"/></svg><span id="loc-btn-txt">Location</span></button>
+      <button class="loc-btn" id="loc-btn" type="button" onclick="openMapModal()" aria-label="Add or change delivery location"><svg viewBox="0 0 24 24"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z"/><circle cx="12" cy="9" r="2.5"/></svg><span id="loc-btn-txt">Add Location</span></button>
       <div class="search-box-wrap">
         <input class="af-trap" type="text" name="fake-username" autocomplete="username" tabindex="-1" aria-hidden="true">
         <input class="af-trap" type="password" name="fake-password" autocomplete="current-password" tabindex="-1" aria-hidden="true">
@@ -1880,7 +1879,7 @@ nav::before{background:linear-gradient(90deg,transparent,rgba(243,53,32,.24),tra
       </div>
     </div>
     <div class="stores-grid" id="stores-grid"></div>
-    <div class="stores-empty" id="stores-empty"><div class="se-ic">ðŸ˜</div><div class="se-t" id="stores-empty-title">No shops found nearby</div><div class="se-s"><span id="stores-empty-sub">No shops within 7 km.</span> <button class="se-link" id="stores-empty-link" onclick="resetFilter()">Show all →</button></div></div>
+    <div class="stores-empty" id="stores-empty"><div class="se-ic">ðŸ˜</div><div class="se-t" id="stores-empty-title">No shops found nearby</div><div class="se-s"><span id="stores-empty-sub">No shops within 7 km.</span><br><button class="se-link" id="stores-empty-link" type="button" onclick="resetFilter()"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z"/><circle cx="12" cy="9" r="2.5"/></svg><span id="stores-empty-link-txt">Add Location</span></button></div></div>
   </div>
 
   <div class="new-products-section" id="new-products-section" style="display:none">
@@ -2420,12 +2419,12 @@ function applyLanguage(){
   setTxt('mobile-wishlist-txt','nav_wishlist');setTxt('mobile-orders-txt','nav_orders');setTxt('mobile-cart-txt','nav_cart');setTxt('mobile-account-txt','nav_account');setTxt('mobile-more-txt','nav_more');
   setTxt('settings-title','settings_title');setTxt('settings-theme-label','settings_theme');setTxt('theme-light-txt','theme_light');setTxt('theme-dark-txt','theme_dark');setTxt('settings-language-label','settings_language');setTxt('lang-en-txt','lang_en');setTxt('lang-hi-txt','lang_hi');setTxt('lang-ta-txt','lang_ta');setTxt('settings-logout-txt','settings_logout');
   setTxt('guest-signup-link','guest_signup');setTxt('guest-login-link','guest_login');
-  setTxt('search-btn-txt','search');setTxt('cats-sec-label','cats_label');setTxt('cats-sec-title','cats_title');setTxt('cats-sec-copy','cats_copy');setTxt('cats-tip','cats_tip');setTxt('offers-sec-label','offers_label');setTxt('offers-sec-title','offers_title');setTxt('stores-sec-label','stores_label');setTxt('nearby-note-txt','stores_note');setTxt('reset-btn-txt','clear_filters');setTxt('stores-empty-title','stores_empty_title');setTxt('stores-empty-sub','stores_empty_sub');setTxt('stores-empty-link','change_location');setTxt('new-sec-label','new_label');setTxt('new-sec-title','new_title');setTxt('new-sec-copy','new_copy');setTxt('new-empty-title','new_empty_title');setTxt('new-empty-sub','new_empty_sub');
+  setTxt('search-btn-txt','search');setTxt('cats-sec-label','cats_label');setTxt('cats-sec-title','cats_title');setTxt('cats-sec-copy','cats_copy');setTxt('cats-tip','cats_tip');setTxt('offers-sec-label','offers_label');setTxt('offers-sec-title','offers_title');setTxt('stores-sec-label','stores_label');setTxt('nearby-note-txt','stores_note');setTxt('reset-btn-txt','clear_filters');setTxt('stores-empty-title','stores_empty_title');setTxt('stores-empty-sub','stores_empty_sub');setTxt('stores-empty-link-txt','change_location');setTxt('new-sec-label','new_label');setTxt('new-sec-title','new_title');setTxt('new-sec-copy','new_copy');setTxt('new-empty-title','new_empty_title');setTxt('new-empty-sub','new_empty_sub');
   setTxt('shop-products-txt','shop_view_products');setTxt('shop-list-txt','shop_view_list');setTxt('shop-map-txt','shop_view_map');
   setTxt('cat-fashion-label','cat_fashion_label');setTxt('cat-fashion-meta','cat_fashion_meta');setTxt('cat-kids-label','cat_kids_label');setTxt('cat-kids-meta','cat_kids_meta');setTxt('cat-appliances-label','cat_appliances_label');setTxt('cat-appliances-meta','cat_appliances_meta');setTxt('cat-sports-label','cat_sports_label');setTxt('cat-sports-meta','cat_sports_meta');setTxt('cat-meat-label','cat_meat_label');setTxt('cat-meat-meta','cat_meat_meta');setTxt('cat-electronics-label','cat_electronics_label');setTxt('cat-electronics-meta','cat_electronics_meta');
   setTxt('notif-title-txt','notif_title');setTxt('notif-markall-txt','notif_markall');setTxt('notif-tab-all','notif_tab_all');setTxt('notif-tab-offers','notif_tab_offers');setTxt('notif-tab-orders','notif_tab_orders');setTxt('notif-tab-alerts','notif_tab_alerts');setTxt('notif-viewall-txt','notif_viewall');setTxt('notif-loading-txt','notif_loading');
   var searchInp=document.getElementById('search-inp');if(searchInp&&!_userLat)searchInp.placeholder=t('search_placeholder');
-  var locBtn=document.getElementById('loc-btn-txt');if(locBtn&&!_userLat)locBtn.textContent=t('location');
+  var locBtn=document.getElementById('loc-btn-txt');if(locBtn&&!_userLat)locBtn.textContent=t('location_add');
   var settingsBtn=document.getElementById('settings-btn');if(settingsBtn)settingsBtn.title=t('settings_title');
   var themeIcons=document.querySelectorAll('.settings-choice-icon');if(themeIcons[0])themeIcons[0].textContent='Sun';if(themeIcons[1])themeIcons[1].textContent='Moon';
   var seIcon=document.querySelector('.stores-empty .se-ic');if(seIcon)seIcon.textContent='No shops';
@@ -3416,7 +3415,7 @@ function updateShopMap(list){
 }
 function renderShops(){
   var grid=document.getElementById('stores-grid'),empty=document.getElementById('stores-empty'),note=document.getElementById('nearby-note'),resetB=document.getElementById('reset-btn'),lbl=document.getElementById('stores-lbl'),productsPanel=document.getElementById('shop-products-panel');
-  var emptyTitle=document.getElementById('stores-empty-title'),emptySub=document.getElementById('stores-empty-sub'),emptyLink=document.getElementById('stores-empty-link'),resetTxt=document.getElementById('reset-btn-txt');
+  var emptyTitle=document.getElementById('stores-empty-title'),emptySub=document.getElementById('stores-empty-sub'),emptyLink=document.getElementById('stores-empty-link'),emptyLinkText=document.getElementById('stores-empty-link-txt'),resetTxt=document.getElementById('reset-btn-txt');
   var hasFilters=!!(_searchTerm||_activeCategory);
   if(!hasDeliveryLocation()){
     grid.classList.remove('single-store');
@@ -3426,7 +3425,7 @@ function renderShops(){
     if(resetTxt)resetTxt.textContent=t('clear_filters');
     if(emptyTitle)emptyTitle.textContent=t('stores_need_location_title');
     if(emptySub)emptySub.textContent=t('stores_need_location_sub');
-    if(emptyLink){emptyLink.textContent=t('location_add');emptyLink.onclick=function(){openMapModal();};}
+    if(emptyLink){if(emptyLinkText)emptyLinkText.textContent=t('location_add');emptyLink.onclick=function(){openMapModal();};}
     var noLocMapPanel=document.getElementById('shop-map-panel');if(noLocMapPanel)noLocMapPanel.classList.remove('show');
     setShopView('list');
     if(productsPanel)productsPanel.classList.remove('show');
@@ -3442,7 +3441,7 @@ function renderShops(){
     if(emptyTitle)emptyTitle.textContent=t('stores_empty_title');
     if(emptySub)emptySub.textContent=t('stores_empty_sub');
     if(emptyLink){
-      emptyLink.textContent=hasFilters?t('clear_filters'):t('change_location');
+      if(emptyLinkText)emptyLinkText.textContent=hasFilters?t('clear_filters'):t('change_location');
       emptyLink.onclick=hasFilters?function(){resetFilter();}:function(){openMapModal();};
     }
     grid.classList.remove('single-store');
