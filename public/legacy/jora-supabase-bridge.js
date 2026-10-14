@@ -7,6 +7,8 @@
   'use strict';
   var client = null, initPromise = null, listeners = [], authListeners = [], currentUser = null;
   var configWaiters = [], configured = false, configError = null;
+  // Keep authentication emails on the public Jora domain even when signup starts in a Vercel preview.
+  var OFFICIAL_APP_URL = 'https://joradelivery.vercel.app/';
 
   function emitAuth(user) { currentUser = user; authListeners.slice().forEach(function (fn) { try { fn(user); } catch (error) { console.error('Auth listener failed', error); } }); }
   function firebaseError(error) {
@@ -163,8 +165,8 @@
     get currentUser() { return currentUser; },
     onAuthStateChanged: function (callback) { authListeners.push(callback); if (configured) setTimeout(function () { callback(currentUser); }, 0); return function () { authListeners = authListeners.filter(function (item) { return item !== callback; }); }; },
     signInWithEmailAndPassword: function (email, password) { return waitForConfig().then(function (api) { return api.auth.signInWithPassword({ email: email, password: password }); }).then(function (result) { if (result.error) throw firebaseError(result.error); return { user: wrapUser(result.data.user) }; }); },
-    createUserWithEmailAndPassword: function (email, password) { return waitForConfig().then(function (api) { var metadata = { full_name: localStorage.getItem('jora_pending_signup_name') || '' }; return api.auth.signUp({ email: email, password: password, options: { data: metadata, emailRedirectTo: window.location.origin + '/' } }); }).then(function (result) { if (result.error) throw firebaseError(result.error); return { user: wrapUser(result.data.user), needsEmailConfirmation: !!(result.data.user && !result.data.session) }; }); },
-    resendSignupConfirmation: function (email) { return waitForConfig().then(function (api) { return api.auth.resend({ type: 'signup', email: email, options: { emailRedirectTo: window.location.origin + '/' } }); }).then(function (result) { if (result.error) throw firebaseError(result.error); }); },
+    createUserWithEmailAndPassword: function (email, password) { return waitForConfig().then(function (api) { var metadata = { full_name: localStorage.getItem('jora_pending_signup_name') || '' }; return api.auth.signUp({ email: email, password: password, options: { data: metadata, emailRedirectTo: OFFICIAL_APP_URL } }); }).then(function (result) { if (result.error) throw firebaseError(result.error); return { user: wrapUser(result.data.user), needsEmailConfirmation: !!(result.data.user && !result.data.session) }; }); },
+    resendSignupConfirmation: function (email) { return waitForConfig().then(function (api) { return api.auth.resend({ type: 'signup', email: email, options: { emailRedirectTo: OFFICIAL_APP_URL } }); }).then(function (result) { if (result.error) throw firebaseError(result.error); }); },
     signOut: function () { return waitForConfig().then(function (api) { return api.auth.signOut(); }).then(function (result) { if (result.error) throw firebaseError(result.error); }); }
   };
   function firestore() { return { collection: function (name) { return new Collection(name); } }; }
