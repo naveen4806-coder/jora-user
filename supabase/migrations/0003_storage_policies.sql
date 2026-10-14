@@ -1,5 +1,12 @@
 -- Storage policies for the public Jora image buckets.
 -- Upload files beneath the authenticated user's UUID folder: <user-id>/<filename>.
+drop policy if exists "profile image upload own folder" on storage.objects;
+drop policy if exists "profile image update own folder" on storage.objects;
+drop policy if exists "profile image delete own folder" on storage.objects;
+drop policy if exists "vendor product image upload own folder" on storage.objects;
+drop policy if exists "vendor product image update own folder" on storage.objects;
+drop policy if exists "vendor product image delete own folder" on storage.objects;
+
 create policy "profile image upload own folder" on storage.objects for insert to authenticated
   with check (bucket_id = 'profile-images' and (storage.foldername(name))[1] = auth.uid()::text);
 create policy "profile image update own folder" on storage.objects for update to authenticated
