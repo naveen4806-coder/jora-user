@@ -1775,21 +1775,11 @@ nav::before{background:linear-gradient(90deg,transparent,rgba(243,53,32,.24),tra
         <button class="cats-tab cats-list-btn" id="cats-list-btn" type="button" onclick="toggleAllCategoryList(event)" aria-expanded="false" aria-controls="category-subfilters"><svg viewBox="0 0 24 24"><path d="M8 6h13M8 12h13M8 18h13"/><circle cx="3.5" cy="6" r="1"/><circle cx="3.5" cy="12" r="1"/><circle cx="3.5" cy="18" r="1"/></svg><span>Category Menu</span></button>
       </div>
       <div class="cats-tabs" aria-label="Shop departments">
+        <button class="cats-tab" type="button" onclick="filterCategoryTab('Food',this)">Food</button>
+        <button class="cats-tab" type="button" onclick="filterCategoryTab('Snacks',this)">Snacks</button>
         <button class="cats-tab" type="button" onclick="filterCategoryTab('Grocery',this)">Grocery</button>
-        <button class="cats-tab" type="button" onclick="filterCategoryTab('Fruits & Vegetables',this)">Fruits &amp; Vegetables</button>
-        <button class="cats-tab" type="button" onclick="filterCategoryTab('Dairy & Eggs',this)">Dairy &amp; Eggs</button>
-        <button class="cats-tab" type="button" onclick="filterCategoryTab('Bakery',this)">Bakery</button>
-        <button class="cats-tab" type="button" onclick="filterCategoryTab('Restaurants',this)">Restaurants</button>
-        <button class="cats-tab" type="button" onclick="filterCategoryTab('Meat & Seafood',this)">Meat &amp; Seafood</button>
-        <button class="cats-tab" type="button" onclick="filterCategoryTab('Snacks & Beverages',this)">Snacks &amp; Beverages</button>
-        <button class="cats-tab" type="button" onclick="filterCategoryTab('Home Essentials',this)">Home Essentials</button>
-        <button class="cats-tab" type="button" onclick="filterCategoryTab('Personal Care',this)">Personal Care</button>
-        <button class="cats-tab" type="button" onclick="filterCategoryTab(&quot;Women's Care&quot;,this)">Women's Care</button>
-        <button class="cats-tab" type="button" onclick="filterCategoryTab('Health',this)">Health</button>
-        <button class="cats-tab" type="button" onclick="filterCategoryTab('Baby Care',this)">Baby Care</button>
-        <button class="cats-tab" type="button" onclick="filterCategoryTab('Stationery',this)">Stationery</button>
-        <button class="cats-tab" type="button" onclick="filterCategoryTab('Flowers & Gifts',this)">Flowers &amp; Gifts</button>
-        <button class="cats-tab" type="button" onclick="filterCategoryTab('Electronics Accessories',this)">Electronics Accessories</button>
+        <button class="cats-tab" type="button" onclick="filterCategoryTab('Fresh Meats',this)">Fresh Meats</button>
+        <button class="cats-tab" type="button" onclick="filterCategoryTab('Medicine',this)">Medicine</button>
       </div>
     </div>
     <div class="cats-scroller" id="cats-row">
@@ -2852,21 +2842,11 @@ function startOffersListener(){
 // ====== CATEGORIES (from Firebase admin_categories) ======
 var _catsUnsub=null;
 var CORE_CATEGORIES=[
-  {id:'core-grocery',name:'Grocery',shopCategory:'Grocery',active:true,order:10},
-  {id:'core-fruit-veg',name:'Fruits & Vegetables',shopCategory:'Fruits & Vegetables',active:true,order:20},
-  {id:'core-dairy-eggs',name:'Dairy & Eggs',shopCategory:'Dairy & Eggs',active:true,order:30},
-  {id:'core-bakery',name:'Bakery',shopCategory:'Bakery',active:true,order:40},
-  {id:'core-restaurants',name:'Restaurants',shopCategory:'Restaurants',active:true,order:50},
-  {id:'core-meat',name:'Meat & Seafood',shopCategory:'Meat & Seafood',active:true,order:60},
-  {id:'core-snacks',name:'Snacks & Beverages',shopCategory:'Snacks & Beverages',active:true,order:70},
-  {id:'core-home',name:'Home Essentials',shopCategory:'Home Essentials',active:true,order:80},
-  {id:'core-personal',name:'Personal Care',shopCategory:'Personal Care',active:true,order:90},
-  {id:'core-womens-care',name:"Women's Care",shopCategory:"Women's Care",active:true,order:95,keywords:['sanitary pads','pads','period care','menstrual care']},
-  {id:'core-health',name:'Health',shopCategory:'Health',active:true,order:97,keywords:['fever','cold','body pain relief','diabetes','headache','condoms']},
-  {id:'core-baby',name:'Baby Care',shopCategory:'Baby Care',active:true,order:100},
-  {id:'core-stationery',name:'Stationery',shopCategory:'Stationery',active:true,order:110},
-  {id:'core-flowers',name:'Flowers & Gifts',shopCategory:'Flowers & Gifts',active:true,order:120},
-  {id:'core-electronics',name:'Electronics Accessories',shopCategory:'Electronics Accessories',active:true,order:130}
+  {id:'core-food',name:'Food',shopCategory:'Food',active:true,order:10},
+  {id:'core-snacks',name:'Snacks',shopCategory:'Snacks',active:true,order:20},
+  {id:'core-grocery',name:'Grocery',shopCategory:'Grocery',active:true,order:30},
+  {id:'core-fresh-meats',name:'Fresh Meats',shopCategory:'Fresh Meats',active:true,order:40},
+  {id:'core-medicine',name:'Medicine',shopCategory:'Medicine',active:true,order:50}
 ];
 function cloneCoreCategories(){return CORE_CATEGORIES.map(function(c){return Object.assign({},c);});}
 function categoryKey(c){return String((c&&c.shopCategory)||((c&&c.name)||'')).toLowerCase().replace(/\s+/g,' ').trim();}
@@ -3021,21 +3001,7 @@ var CATEGORY_SUBFILTERS={
   ]
 };
 /* Final Zorra category catalogue */
-CATEGORY_SUBFILTERS={
-  'Grocery':[{group:'Grocery',items:['Rice','Oil','Flour','Sugar','Spices','Pulses']}],
-  'Fruits & Vegetables':[{group:'Fresh Produce',items:['Fresh fruits','Fresh vegetables']}],
-  'Dairy & Eggs':[{group:'Dairy & Eggs',items:['Milk','Curd','Butter','Paneer','Eggs']}],
-  'Bakery':[{group:'Bakery',items:['Bread','Cakes','Cookies','Pastries']}],
-  'Restaurants':[{group:'Meals',items:['Meals','Biryani','Pizza','Burgers','Dosa','Fried Rice']}],
-  'Meat & Seafood':[{group:'Fresh Meat & Seafood',items:['Chicken','Mutton','Fish','Prawns']}],
-  'Snacks & Beverages':[{group:'Snacks & Drinks',items:['Chips','Chocolates','Soft drinks','Juices','Water']}],
-  'Home Essentials':[{group:'Home Essentials',items:['Cleaning products','Detergents','Kitchen essentials','Garbage bags']}],
-  'Personal Care':[{group:'Personal Care',items:['Soap','Shampoo','Toothpaste','Toothbrush','Face wash','Hair oil']}],
-  'Baby Care':[{group:'Baby Care',items:['Diapers','Baby wipes','Baby lotion','Baby powder','Baby shampoo','Baby soap','Feeding bottles','Baby food','Baby cereal']}],
-  'Stationery':[{group:'Stationery',items:['Pens','Notebooks','School supplies','Printer paper']}],
-  'Flowers & Gifts':[{group:'Flowers & Gifts',items:['Bouquets','Greeting cards','Gift boxes','Chocolates']}],
-  'Electronics Accessories':[{group:'Electronics Accessories',items:['Chargers','USB cables','Earphones','Phone cases','Power banks']}]
-};
+CATEGORY_SUBFILTERS={Food:[],Snacks:[],Grocery:[],'Fresh Meats':[],Medicine:[]};
 var _activeSubCategory='';
 var _previewCategory='';
 function renderCategorySubfilters(cat){
@@ -4485,8 +4451,8 @@ html,body{max-width:100%;overflow-x:hidden}.customer-home{background:var(--zr-bg
 @media(max-width:360px){.cats-scroller .cat-card{flex-basis:80px!important;min-width:80px!important}.cats-scroller .cat-icon-wrap{width:62px!important;height:62px!important;min-height:62px!important}.mobile-nav-shortcuts.zorra-compact-bottom{left:6px!important;right:6px!important}.mobile-nav-shortcut{font-size:.53rem!important}}
 @media(prefers-reduced-motion:reduce){.cats-scroller,.advertisement-panel .banner-gallery{scroll-behavior:auto!important}.cat-card,.store-card,.np-card,.offer-card,.mobile-nav-shortcut,.rw-btn{transition:none!important;animation:none!important}}
 </style>
-<script id="zorra-premium-category-cards">
-(function(){function build(){var row=document.getElementById('cats-row');if(!row)return;var categories=[{name:'Grocery',filter:'Groceries',image:'https://images.unsplash.com/photo-1542838132-92c53300491e?auto=format&fit=crop&w=240&q=82'},{name:'Fruits & Vegetables',filter:'Fruits & Vegetables',image:'https://images.unsplash.com/photo-1610832958506-aa56368176cf?auto=format&fit=crop&w=240&q=82'},{name:'Dairy & Eggs',filter:'Dairy & Eggs',image:'https://images.unsplash.com/photo-1628088062854-d1870b4553da?auto=format&fit=crop&w=240&q=82'},{name:'Personal Care',filter:'Personal Care',image:'https://images.unsplash.com/photo-1556228578-8c89e6adf883?auto=format&fit=crop&w=240&q=82'},{name:'Health & Medicine',filter:'Health',image:'https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?auto=format&fit=crop&w=240&q=82'},{name:'More',more:true,image:'https://images.unsplash.com/photo-1607082349566-187342175e2f?auto=format&fit=crop&w=240&q=82'}];row.innerHTML=categories.map(function(c){var action=c.more?'toggleAllCategoryList(event)':"filterByShopCategory('"+c.filter.replace(/'/g,"\\'")+"',true)";return '<button class="cat-card" type="button" onclick="'+action+'" aria-label="Browse '+c.name+'"><span class="cat-icon-wrap"><img src="'+c.image+'" alt="'+c.name+'" loading="lazy"></span><span class="cat-content"><span class="cat-label">'+c.name+'</span></span></button>';}).join('');}if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',build);else build();})();
+<script id="jora-main-category-cards">
+(function(){function build(){var row=document.getElementById('cats-row');if(!row)return;var categories=[{name:'Food',filter:'Food',image:'https://images.unsplash.com/photo-1504674900247-0877df9cc836?auto=format&fit=crop&w=240&q=82'},{name:'Snacks',filter:'Snacks',image:'https://images.unsplash.com/photo-1621939514649-280e2aa9454f?auto=format&fit=crop&w=240&q=82'},{name:'Grocery',filter:'Grocery',image:'https://images.unsplash.com/photo-1542838132-92c53300491e?auto=format&fit=crop&w=240&q=82'},{name:'Fresh Meats',filter:'Fresh Meats',image:'https://images.unsplash.com/photo-1607623814075-e51df1bdc82f?auto=format&fit=crop&w=240&q=82'},{name:'Medicine',filter:'Medicine',image:'https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?auto=format&fit=crop&w=240&q=82'}];row.innerHTML=categories.map(function(c){var action="filterByShopCategory('"+c.filter.replace(/'/g,"\\'")+"',true)";return '<button class="cat-card" type="button" onclick="'+action+'" aria-label="Browse '+c.name+'"><span class="cat-icon-wrap"><img src="'+c.image+'" alt="'+c.name+'" loading="lazy"></span><span class="cat-content"><span class="cat-label">'+c.name+'</span></span></button>';}).join('');}if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',build);else build();})();
 </script>
 <script id="zorra-bottom-nav-active-state">
 (function(){function init(){var links=Array.from(document.querySelectorAll('.mobile-nav-shortcuts.zorra-compact-bottom .mobile-nav-shortcut'));if(!links.length)return;links[0].classList.add('active');links.forEach(function(link){link.addEventListener('click',function(){links.forEach(function(item){item.classList.remove('active');});link.classList.add('active');});});}if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init);else init();})();
@@ -4911,5 +4877,5 @@ body.theme-dark{--jora-dark-bg:#101B14;--jora-dark-surface:#17261C;--jora-dark-r
 </style>
 <style id="jora-home-control-fit-final">
 /* Lock the location and search controls to the same column and prevent a narrow input from pushing its button outside the card. */
-.search-wrap,.search-row,.search-box-wrap{min-width:0;max-width:100%}.search-bar .loc-btn,.search-bar .search-box{box-sizing:border-box;max-width:100%}@media(max-width:767px){.search-bar .search-box{display:flex!important;min-width:0!important;max-width:100%!important;overflow:hidden!important}.search-bar .search-box input{flex:1 1 0!important;width:0!important;min-width:0!important;max-width:none!important}.search-bar .search-box button{flex:0 0 auto!important;white-space:nowrap!important}.search-bar .loc-btn,.search-bar .search-box{width:100%!important;margin-left:0!important;margin-right:0!important}}
+.search-wrap,.search-row,.search-box-wrap{min-width:0;max-width:100%}.search-bar .loc-btn,.search-bar .search-box{box-sizing:border-box;max-width:100%}@media(max-width:767px){.search-bar .search-box{display:flex!important;min-width:0!important;max-width:100%!important;overflow:hidden!important}.search-bar .search-box input{flex:1 1 0!important;width:0!important;min-width:0!important;max-width:none!important}.search-bar .search-box button{align-self:center!important;flex:0 0 auto!important;min-height:0!important;white-space:nowrap!important;box-shadow:none!important;transform:none!important}.search-bar .search-box button:active{box-shadow:none!important;transform:none!important}.search-bar .loc-btn,.search-bar .search-box{width:100%!important;margin-left:0!important;margin-right:0!important}}
 </style>
