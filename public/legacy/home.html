@@ -49,6 +49,7 @@ body.theme-dark{--jora-dark-bg:#101B14;--jora-dark-surface:#17261C;--jora-dark-r
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <script src="jora-supabase-bridge.js"></script>
   <script src="jora-home-auth-gate.js"></script>
+  <script src="jora-global-language.js"></script>
 <style>
 /* ===== RESET & ROOT ===== */
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
@@ -2448,7 +2449,7 @@ function applyLanguage(){
 }
 function updateSettingsButtons(){['en','hi','ta'].forEach(function(code){var btn=document.getElementById('lang-'+code+'-btn');if(btn)btn.classList.toggle('active',_lang===code);});var wrap=document.getElementById('settings-wrap');var btn=document.getElementById('settings-btn');if(wrap&&btn)btn.setAttribute('aria-expanded',wrap.classList.contains('open')?'true':'false');}
 function setTheme(theme){_theme=theme==='dark'?'dark':'light';sv('jora_theme',_theme);sv('ls_theme',_theme);applyTheme();updateSettingsButtons();toast(t(_theme==='dark'?'toast_theme_dark':'toast_theme_light'),'info');}
-function setLanguage(lang){if(!I18N[lang])lang='en';_lang=lang;sv('ls_lang',_lang);applyLanguage();toast(t('toast_language'),'info');}
+function setLanguage(lang){if(!I18N[lang])lang='en';_lang=lang;sv('ls_lang',_lang);applyLanguage();if(window.JoraLanguage)window.JoraLanguage.apply(_lang);toast(t('toast_language'),'info');}
 function toggleSettingsPanel(){var wrap=document.getElementById('settings-wrap'),panel=document.getElementById('settings-panel');if(!wrap||!panel)return;var opening=!document.body.classList.contains('settings-open');if(opening){wrap.classList.add('open');document.body.classList.add('settings-open');if(window.matchMedia('(max-width:760px)').matches){document.body.appendChild(panel);panel.classList.add('mobile-settings-panel');}closeCategoryMenu();syncHomeNotificationSettings();}else closeSettingsPanel();updateSettingsButtons();}
 function closeSettingsPanel(){var wrap=document.getElementById('settings-wrap'),panel=document.getElementById('settings-panel');if(wrap)wrap.classList.remove('open');document.body.classList.remove('settings-open');if(wrap&&panel&&panel.parentNode!==wrap){panel.classList.remove('mobile-settings-panel');wrap.appendChild(panel);}updateSettingsButtons();}
 function syncHomeNotificationSettings(){var api=window.NexCartNotifications,choice=document.getElementById('home-sound-choice'),volume=document.getElementById('home-sound-volume'),value=document.getElementById('home-sound-volume-value'),status=document.getElementById('home-sound-status');if(!api||!api.getPreferences){if(status)status.textContent='Notification settings are still loading.';return;}var prefs=api.getPreferences();if(choice)choice.value=prefs.sound||'classic';var level=Math.round((Number(prefs.volume)||0)*100);if(volume)volume.value=level;if(value)value.textContent=level+'%';if(status){var text=!('Notification' in window)?'Browser alerts are not supported here.':'Browser alert permission: '+Notification.permission+'.';if(location.protocol==='file:')text+=' Open through HTTPS or localhost to enable browser alerts.';else text+=' Sound settings are saved on this device.';status.textContent=text;}}

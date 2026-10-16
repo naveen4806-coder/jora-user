@@ -38,6 +38,13 @@ function LegacyFrame() {
   }, [page]);
   const onLoad = (event) => {
     setReady(true);
+    const frameDocument = event.currentTarget.contentDocument;
+    if (frameDocument && !frameDocument.getElementById('jora-global-language-loader') && !event.currentTarget.contentWindow?.JoraLanguage) {
+      const language = frameDocument.createElement('script');
+      language.id = 'jora-global-language-loader';
+      language.src = '/legacy/jora-global-language.js';
+      frameDocument.head.appendChild(language);
+    }
     const url = import.meta.env.VITE_SUPABASE_URL || '';
     const key = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY || '';
     if (url && key) event.currentTarget.contentWindow?.postMessage({ type: 'jora:supabase-config', url, key }, window.location.origin);
