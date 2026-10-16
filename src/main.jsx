@@ -6,7 +6,20 @@ const LEGACY_PAGES = new Set(['opening.html', 'index.html', 'home.html', 'shop.h
 
 function currentLegacyPage() {
   const page = window.location.pathname.split('/').pop();
-  return LEGACY_PAGES.has(page) ? page : 'opening.html';
+  // Authentication is the actual Jora index experience. Home is shown only
+  // after the customer has an active Supabase session.
+  return LEGACY_PAGES.has(page) ? page : 'account.html?entry=1&next=home.html';
+}
+
+function legacySource(page) {
+  const [path, query = ''] = page.split('?');
+  const parameters = new URLSearchParams(query);
+  const outerParameters = new URLSearchParams(window.location.search);
+  outerParameters.forEach((value, key) => {
+    if (!parameters.has(key)) parameters.append(key, value);
+  });
+  const search = parameters.toString();
+  return `/legacy/${path}${search ? `?${search}` : ''}${window.location.hash}`;
 }
 
 function LegacyFrame() {
@@ -51,7 +64,7 @@ function LegacyFrame() {
   };
   return <div className="legacy-frame-shell" aria-busy={!ready}>
     {!ready && <div className="legacy-frame-loader" aria-label="Loading Jora"><span className="legacy-loader-mark">J</span><span>Loading Jora</span></div>}
-    <iframe className={`legacy-page${ready ? ' is-ready' : ''}`} title="Jora" src={`/legacy/${page}${window.location.search}${window.location.hash}`} allow="autoplay; clipboard-write" onLoad={onLoad} />
+    <iframe className={`legacy-page${ready ? ' is-ready' : ''}`} title="Jora" src={legacySource(page)} allow="autoplay; clipboard-write" onLoad={onLoad} />
   </div>;
 }
 
