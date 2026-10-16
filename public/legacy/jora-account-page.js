@@ -15,6 +15,13 @@
       el.className = 'jora-checkout-note' + (type ? ' is-' + type : '');
     });
   }
+  function entryDestination() {
+    var requested = new URLSearchParams(window.location.search).get('next') || 'home.html';
+    return requested === 'home.html' ? requested : 'home.html';
+  }
+  function authLink(tab) {
+    return 'home.html?auth=' + tab + '&return=' + encodeURIComponent(entryDestination());
+  }
   function links() {
     return '<nav class="jora-menu" aria-label="Account options">' +
       '<a href="wishlist.html"><span>Wishlist<br><small>Saved products</small></span><span>›</span></a>' +
@@ -24,9 +31,22 @@
       '</nav>';
   }
   function guest() {
-    app.innerHTML = JoraShell.nav('account') +
-      '<main class="jora-page"><section class="jora-hero"><div><h1>My Profile</h1><p>Sign in to view your delivery details, orders, and wishlist.</p></div></section>' +
-      '<div class="jora-empty"><p>You are browsing as a guest.</p><a class="jora-button" href="home.html?auth=login&return=account.html">Sign in</a></div></main>';
+    document.body.classList.add('jora-auth-entry');
+    app.innerHTML =
+      '<main class="jora-auth-entry-page">' +
+        '<section class="jora-auth-entry-card" aria-labelledby="jora-auth-title">' +
+          '<a class="jora-auth-entry-brand" href="information.html" aria-label="About Jora"><img src="assets/jora-logo.png" alt="Jora logo"><span>JORA</span></a>' +
+          '<p class="jora-auth-entry-eyebrow">LOCAL SHOPPING, DELIVERED SIMPLY</p>' +
+          '<h1 id="jora-auth-title">Welcome to Jora</h1>' +
+          '<p class="jora-auth-entry-copy">Sign in to save your favourites, place orders, and keep every delivery in one place.</p>' +
+          '<div class="jora-auth-entry-actions">' +
+            '<a class="jora-auth-entry-primary" href="' + authLink('login') + '">Log in</a>' +
+            '<a class="jora-auth-entry-secondary" href="' + authLink('signup') + '">Create an account</a>' +
+          '</div>' +
+          '<p class="jora-auth-entry-help">New here? Create an account first. After email confirmation, log in to continue to Jora.</p>' +
+          '<a class="jora-auth-entry-about" href="information.html">About Jora and support <span aria-hidden="true">→</span></a>' +
+        '</section>' +
+      '</main>';
   }
   function profileAvatar(avatar, label, email) {
     return '<span class="jora-avatar-fallback">' + esc(initials(label, email)) + '</span>' +
@@ -61,6 +81,11 @@
       var result = await api.auth.getUser();
       var user = result.data && result.data.user;
       if (!user) { guest(); return; }
+      if (new URLSearchParams(window.location.search).get('entry') === '1') {
+        window.location.replace(entryDestination());
+        return;
+      }
+      document.body.classList.remove('jora-auth-entry');
       var found = await api.from('profiles').select('*').eq('id', user.id).maybeSingle();
       if (found.error) throw found.error;
       var profile = found.data || { id: user.id, full_name: (user.user_metadata && user.user_metadata.full_name) || '', email: user.email || '', phone: '', address: '', avatar_url: null };
