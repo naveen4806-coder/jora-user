@@ -21,9 +21,9 @@
     <div class="copy"><b>JORA</b><p>Local shopping, delivered simply</p></div>
   </main>
   <script>
-    // The customer-facing entry is the sign-in form. Keep this lightweight
-    // opening route only for saved legacy links, then forward to that form.
-    location.replace('home.html?auth=login&return=home.html' +
+    // The customer-facing entry is the Login / Sign Up page. Keep this
+    // lightweight opening route only for saved legacy links.
+    location.replace('account.html?entry=1&next=home.html' +
       (location.search ? '&' + location.search.slice(1) : '') + location.hash);
   </script>
 </body>

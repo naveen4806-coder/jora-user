@@ -19,9 +19,6 @@
     var requested = new URLSearchParams(window.location.search).get('next') || 'home.html';
     return requested === 'home.html' ? requested : 'home.html';
   }
-  function authLink(tab) {
-    return 'home.html?auth=' + tab + '&return=' + encodeURIComponent(entryDestination());
-  }
   function links() {
     return '<nav class="jora-menu" aria-label="Account options">' +
       '<a href="wishlist.html"><span>Wishlist<br><small>Saved products</small></span><span>›</span></a>' +
@@ -30,7 +27,7 @@
       '<a href="settings.html"><span>Settings<br><small>Theme, language and sign out</small></span><span>›</span></a>' +
       '</nav>';
   }
-  function guest() {
+  function guest(api) {
     document.body.classList.add('jora-auth-entry');
     app.innerHTML =
       '<main class="jora-auth-entry-page">' +
@@ -38,15 +35,112 @@
           '<a class="jora-auth-entry-brand" href="information.html" aria-label="About Jora"><img src="assets/jora-logo.png" alt="Jora logo"><span>JORA</span></a>' +
           '<p class="jora-auth-entry-eyebrow">LOCAL SHOPPING, DELIVERED SIMPLY</p>' +
           '<h1 id="jora-auth-title">Welcome to Jora</h1>' +
-          '<p class="jora-auth-entry-copy">Sign in to save your favourites, place orders, and keep every delivery in one place.</p>' +
-          '<div class="jora-auth-entry-actions">' +
-            '<a class="jora-auth-entry-primary" href="' + authLink('login') + '">Log in</a>' +
-            '<a class="jora-auth-entry-secondary" href="' + authLink('signup') + '">Create an account</a>' +
+          '<p class="jora-auth-entry-copy">Sign in or create an account to order, save your favourites, and manage deliveries.</p>' +
+          '<div class="jora-auth-tabs" role="tablist" aria-label="Account access">' +
+            '<button class="is-active" id="jora-login-tab" type="button" role="tab" aria-selected="true">Log in</button>' +
+            '<button id="jora-signup-tab" type="button" role="tab" aria-selected="false">Sign up</button>' +
           '</div>' +
-          '<p class="jora-auth-entry-help">New here? Create an account first. After email confirmation, log in to continue to Jora.</p>' +
+          '<form class="jora-auth-form" id="jora-login-form" novalidate>' +
+            '<label>Email address<input id="jora-login-email" type="email" autocomplete="email" placeholder="you@example.com" required></label>' +
+            '<label>Password<input id="jora-login-password" type="password" autocomplete="current-password" placeholder="Enter your password" required></label>' +
+            '<button class="jora-auth-submit" type="submit">Log in to Jora</button>' +
+          '</form>' +
+          '<form class="jora-auth-form" id="jora-signup-form" hidden novalidate>' +
+            '<label>Full name<input id="jora-signup-name" type="text" autocomplete="name" placeholder="Your name" maxlength="120" required></label>' +
+            '<label>Email address<input id="jora-signup-email" type="email" autocomplete="email" placeholder="you@example.com" required></label>' +
+            '<label>Mobile number<input id="jora-signup-phone" type="tel" inputmode="tel" autocomplete="tel" placeholder="9876543210" maxlength="15" required></label>' +
+            '<label>Create password<input id="jora-signup-password" type="password" autocomplete="new-password" placeholder="At least 6 characters" minlength="6" required></label>' +
+            '<button class="jora-auth-submit" type="submit">Create my account</button>' +
+          '</form>' +
+          '<p class="jora-auth-message" id="jora-auth-message" aria-live="polite"></p>' +
+          '<p class="jora-auth-entry-help">After signing up, confirm your email and return here to log in.</p>' +
           '<a class="jora-auth-entry-about" href="information.html">About Jora and support <span aria-hidden="true">→</span></a>' +
         '</section>' +
       '</main>';
+    bindGuest(api);
+  }
+  function bindGuest(api) {
+    var loginTab = document.getElementById('jora-login-tab');
+    var signupTab = document.getElementById('jora-signup-tab');
+    var loginForm = document.getElementById('jora-login-form');
+    var signupForm = document.getElementById('jora-signup-form');
+    var message = document.getElementById('jora-auth-message');
+    function setMessage(text, kind) {
+      message.textContent = text || '';
+      message.className = 'jora-auth-message' + (kind ? ' is-' + kind : '');
+    }
+    function setTab(tab) {
+      var login = tab === 'login';
+      loginForm.hidden = !login;
+      signupForm.hidden = login;
+      loginTab.classList.toggle('is-active', login);
+      signupTab.classList.toggle('is-active', !login);
+      loginTab.setAttribute('aria-selected', String(login));
+      signupTab.setAttribute('aria-selected', String(!login));
+      setMessage('');
+      (login ? document.getElementById('jora-login-email') : document.getElementById('jora-signup-name')).focus();
+    }
+    function setSubmitting(form, submitting, label) {
+      var button = form.querySelector('button[type="submit"]');
+      button.disabled = submitting;
+      button.textContent = submitting ? 'Please wait…' : label;
+    }
+    function readableError(error) {
+      var text = (error && error.message) || 'Something went wrong. Please try again.';
+      if (/invalid login credentials/i.test(text)) return 'Incorrect email or password.';
+      if (/email not confirmed/i.test(text)) return 'Please confirm your email, then log in.';
+      if (/already registered/i.test(text)) return 'An account already exists for this email. Log in instead.';
+      return text;
+    }
+    loginTab.onclick = function () { setTab('login'); };
+    signupTab.onclick = function () { setTab('signup'); };
+    loginForm.onsubmit = async function (event) {
+      event.preventDefault();
+      var email = document.getElementById('jora-login-email').value.trim();
+      var password = document.getElementById('jora-login-password').value;
+      if (!email || !password) { setMessage('Enter your email address and password.', 'error'); return; }
+      setSubmitting(loginForm, true, 'Log in to Jora');
+      setMessage('');
+      try {
+        var login = await api.auth.signInWithPassword({ email: email, password: password });
+        if (login.error) throw login.error;
+        window.location.replace(entryDestination());
+      } catch (error) {
+        setMessage(readableError(error), 'error');
+      } finally {
+        setSubmitting(loginForm, false, 'Log in to Jora');
+      }
+    };
+    signupForm.onsubmit = async function (event) {
+      event.preventDefault();
+      var name = document.getElementById('jora-signup-name').value.trim();
+      var email = document.getElementById('jora-signup-email').value.trim();
+      var phone = document.getElementById('jora-signup-phone').value.replace(/\D/g, '');
+      var password = document.getElementById('jora-signup-password').value;
+      if (!name || !email || !phone || !password) { setMessage('Complete every field to create your account.', 'error'); return; }
+      if (!/^\d{10}$/.test(phone)) { setMessage('Enter a valid 10-digit mobile number.', 'error'); return; }
+      if (password.length < 6) { setMessage('Your password must contain at least 6 characters.', 'error'); return; }
+      setSubmitting(signupForm, true, 'Create my account');
+      setMessage('');
+      try {
+        var signup = await api.auth.signUp({
+          email: email,
+          password: password,
+          options: { data: { full_name: name, phone: phone }, emailRedirectTo: window.location.origin + '/' }
+        });
+        if (signup.error) throw signup.error;
+        if (!signup.data || !signup.data.session) {
+          setTab('login');
+          setMessage('Account created. Check your email, confirm your account, then log in.', 'success');
+          return;
+        }
+        window.location.replace(entryDestination());
+      } catch (error) {
+        setMessage(readableError(error), 'error');
+      } finally {
+        setSubmitting(signupForm, false, 'Create my account');
+      }
+    };
   }
   function profileAvatar(avatar, label, email) {
     return '<span class="jora-avatar-fallback">' + esc(initials(label, email)) + '</span>' +
@@ -80,7 +174,7 @@
       var api = await JoraSupabase.ready();
       var result = await api.auth.getUser();
       var user = result.data && result.data.user;
-      if (!user) { guest(); return; }
+      if (!user) { guest(api); return; }
       if (new URLSearchParams(window.location.search).get('entry') === '1') {
         window.location.replace(entryDestination());
         return;
