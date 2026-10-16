@@ -6,7 +6,10 @@ const LEGACY_PAGES = new Set(['opening.html', 'index.html', 'home.html', 'shop.h
 
 function currentLegacyPage() {
   const page = window.location.pathname.split('/').pop();
-  return LEGACY_PAGES.has(page) ? page : 'opening.html';
+  // Jora opens on the existing Home sign-in form. The opening video is still
+  // available at /opening.html, but it no longer delays a customer who wants
+  // to log in or create an account.
+  return LEGACY_PAGES.has(page) ? page : 'home.html?auth=login&return=home.html';
 }
 
 function LegacyFrame() {
