@@ -8,7 +8,7 @@
     ['out for delivery', 'Out for delivery', 'Your rider is on the way.'],
     ['delivered', 'Delivered', 'Your order has been delivered.']
   ];
-  function normal(value) { return String(value || '').toLowerCase().replace(/\s+/g, ' ').trim(); }
+  function normal(value) { return String(value || '').toLowerCase().replace(/_/g, ' ').replace(/\s+/g, ' ').trim(); }
   function indexFor(status) {
     status = normal(status);
     if (status === 'cancelled' || status === 'refunded') return -1;
