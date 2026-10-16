@@ -104,6 +104,61 @@
     Object.keys(reverse[table] || {}).forEach(function (key) { out[reverse[table][key]] = row[key]; });
     return out;
   }
+  // The vendor app publishes its approved catalogue as JSON rows in these
+  // marketplace tables. Flatten those rows here so every retained customer
+  // screen can consume them with the same shops/products API.
+  function marketRow(table, row) {
+    var data = Object.assign({}, row && row.data || {});
+    if (table === 'shops') {
+      return Object.assign(data, {
+        id: row.vendor_shop_id,
+        owner_id: data.ownerUid || data.vendorId || row.vendor_id || '',
+        image_url: data.image_url || data.image || data.imageUrl || '',
+        banner_url: data.banner_url || data.banner || '',
+        latitude: data.latitude == null ? data.lat : data.latitude,
+        longitude: data.longitude == null ? data.lng : data.longitude,
+        active: data.active !== false && data.isOpen !== false,
+        created_at: data.createdAt || row.updated_at,
+        updated_at: row.updated_at
+      });
+    }
+    return Object.assign(data, {
+      id: row.vendor_product_id,
+      shop_id: row.shop_id || data.shopId || '',
+      image_url: data.image_url || data.image || data.imageUrl || '',
+      active: data.active !== false,
+      created_at: data.createdAt || row.updated_at,
+      updated_at: row.updated_at
+    });
+  }
+  function marketRows(api, table) {
+    if (table !== 'shops' && table !== 'products') return Promise.resolve([]);
+    var marketTable = table === 'shops' ? 'market_shops' : 'market_products';
+    return api.from(marketTable).select('*').then(function (result) {
+      // Older database deployments may not have marketplace tables yet. The
+      // original customer catalogue must remain available in that case.
+      if (result.error) {
+        console.warn('Jora marketplace catalogue unavailable:', result.error.message);
+        return [];
+      }
+      return (result.data || []).map(function (row) { return legacyRow(table, marketRow(table, row)); });
+    });
+  }
+  function filterAndOrder(rows, ref) {
+    var values = rows.filter(function (row) {
+      return ref.filters.every(function (filter) {
+        return filter.op !== '==' || String(row[filter.field] == null ? '' : row[filter.field]) === String(filter.value == null ? '' : filter.value);
+      });
+    });
+    ref.orders.slice().reverse().forEach(function (order) {
+      values.sort(function (left, right) {
+        var a = left[order.field], b = right[order.field];
+        if (a === b) return 0;
+        return (a > b ? 1 : -1) * (order.desc ? -1 : 1);
+      });
+    });
+    return ref.max ? values.slice(0, ref.max) : values;
+  }
   function orderRow(data) {
     var status = String(data.status || 'placed').toLowerCase().replace(/\s+/g, '_');
     if ({ handedover: 1, handovered: 1, shipped: 1 }[status]) status = 'handed_to_delivery_partner';
@@ -116,11 +171,12 @@
   function snapshot(rows) { return { forEach: function (fn) { rows.forEach(function (row) { fn({ id: row.id, exists: true, data: function () { return row; } }); }); }, docs: rows.map(function (row) { return { id: row.id, exists: true, data: function () { return row; } }; }) }; }
   function queryRows(ref) {
     return waitForConfig().then(function (api) {
-      var query = api.from(ref.table).select('*');
-      ref.filters.forEach(function (filter) { if (filter.op === '==') query = query.eq(fieldFor(ref.table, filter.field), filter.value); });
-      ref.orders.forEach(function (order) { query = query.order(fieldFor(ref.table, order.field), { ascending: !order.desc }); });
-      if (ref.max) query = query.limit(ref.max);
-      return query.then(function (result) { if (result.error) throw result.error; return (result.data || []).map(function (row) { return legacyRow(ref.table, row); }); });
+      return Promise.all([api.from(ref.table).select('*'), marketRows(api, ref.table)]).then(function (results) {
+        var result = results[0];
+        if (result.error) throw result.error;
+        var primary = (result.data || []).map(function (row) { return legacyRow(ref.table, row); });
+        return filterAndOrder(primary.concat(results[1]), ref);
+      });
     });
   }
   function Collection(name, id) { this.name = name; this.table = tableFor(name); this.id = id || null; this.filters = []; this.orders = []; this.max = null; }
@@ -132,7 +188,15 @@
   Collection.prototype.get = function () {
     var ref = this;
     return waitForConfig().then(function (api) {
-      if (ref.id) return api.from(ref.table).select('*').eq('id', ref.id).maybeSingle().then(function (result) { if (result.error) throw result.error; var row = result.data && legacyRow(ref.table, result.data); return { id: ref.id, exists: !!row, data: function () { return row || {}; } }; });
+      if (ref.id) return api.from(ref.table).select('*').eq('id', ref.id).maybeSingle().then(function (result) {
+        if (result.error) throw result.error;
+        var row = result.data && legacyRow(ref.table, result.data);
+        if (row || (ref.table !== 'shops' && ref.table !== 'products')) return { id: ref.id, exists: !!row, data: function () { return row || {}; } };
+        return marketRows(api, ref.table).then(function (rows) {
+          var market = rows.find(function (item) { return String(item.id) === String(ref.id); }) || null;
+          return { id: ref.id, exists: !!market, data: function () { return market || {}; } };
+        });
+      });
       return queryRows(ref).then(snapshot);
     });
   };
