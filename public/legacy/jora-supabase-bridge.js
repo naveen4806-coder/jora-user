@@ -6,7 +6,7 @@
 (function () {
   'use strict';
   var client = null, initPromise = null, listeners = [], authListeners = [], currentUser = null;
-  var configWaiters = [], configured = false, configError = null;
+  var configWaiters = [], configured = false, configError = null, lastConfig = null, configRetries = 0;
   // Keep authentication emails on the public Jora domain even when signup starts in a Vercel preview.
   var OFFICIAL_APP_URL = 'https://joradelivery.vercel.app/';
 
@@ -34,12 +34,13 @@
         var index = configWaiters.indexOf(entry);
         if (index >= 0) configWaiters.splice(index, 1);
         reject(configUnavailable());
-      }, 10000);
+      }, 20000);
       var entry = { resolve: function (api) { clearTimeout(timeout); resolve(api); }, reject: function (error) { clearTimeout(timeout); reject(error); } };
       configWaiters.push(entry);
     });
   }
   function configure(config) {
+    if (config && config.url && config.key) lastConfig = config;
     if (configured || initPromise || !config || !config.url || !config.key) return;
     configError = null;
     initPromise = import('https://esm.sh/@supabase/supabase-js@2?bundle').then(function (module) {
@@ -59,6 +60,12 @@
       configError = error;
       configWaiters.splice(0).forEach(function (entry) { entry.reject(error); });
       console.error('Unable to initialise Jora Supabase', error);
+      // A cold cache can occasionally fail the first module request. Retry
+      // once automatically so a signed-in customer never needs to refresh.
+      if (lastConfig && configRetries < 1) {
+        configRetries += 1;
+        setTimeout(function () { configError = null; configure(lastConfig); }, 800);
+      }
     });
   }
   window.addEventListener('message', function (event) {
