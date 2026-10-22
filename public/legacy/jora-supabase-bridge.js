@@ -40,18 +40,22 @@
     });
   }
   function configure(config) {
-    if (configured || !config || !config.url || !config.key) return;
-    configured = true;
+    if (configured || initPromise || !config || !config.url || !config.key) return;
+    configError = null;
     initPromise = import('https://esm.sh/@supabase/supabase-js@2?bundle').then(function (module) {
       client = module.createClient(config.url, config.key, { auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true } });
       return client.auth.getSession();
     }).then(function (result) {
+      if (result.error) throw result.error;
       emitAuth(wrapUser(result.data && result.data.session && result.data.session.user));
       client.auth.onAuthStateChange(function (_event, session) { emitAuth(wrapUser(session && session.user)); });
+      configured = true;
       configWaiters.splice(0).forEach(function (entry) { entry.resolve(client); });
       return client;
     }).catch(function (error) {
       configured = false;
+      client = null;
+      initPromise = null;
       configError = error;
       configWaiters.splice(0).forEach(function (entry) { entry.reject(error); });
       console.error('Unable to initialise Jora Supabase', error);
@@ -66,7 +70,7 @@
   // public config file as a reliable fallback.
   function configureRuntimeFallback() {
     if (window.__JORA_SUPABASE_CONFIG__) configure(window.__JORA_SUPABASE_CONFIG__);
-    if (configured || document.querySelector('script[data-jora-supabase-runtime]')) return;
+    if (configured || initPromise || document.querySelector('script[data-jora-supabase-runtime]')) return;
     var runtime = document.createElement('script');
     runtime.src = 'jora-supabase-runtime-config.js';
     runtime.async = true;
@@ -92,7 +96,9 @@
   }
   function legacyRow(table, row) {
     if (!row) return row;
-    var out = Object.assign({}, row);
+    // Order workflow flags are stored in the shared row's data object. Keep
+    // authoritative columns last so JSON cannot override the actual owner or status.
+    var out = Object.assign({}, table === 'orders' && row.data || {}, row);
     var reverse = {
       profiles: { full_name: 'name', phone: 'phoneNumber', avatar_url: 'avatarUrl', created_at: 'createdAt', updated_at: 'updatedAt' },
       shops: { owner_id: 'ownerUid', image_url: 'image', banner_url: 'banner', latitude: 'lat', longitude: 'lng', created_at: 'createdAt', updated_at: 'updatedAt' },
@@ -102,6 +108,17 @@
       product_reviews: { product_id: 'productId', user_id: 'userId', verified_purchase: 'verifiedPurchase', created_at: 'createdAt' }
     };
     Object.keys(reverse[table] || {}).forEach(function (key) { out[reverse[table][key]] = row[key]; });
+    if (table === 'orders') {
+      var statusLabels = { placed: 'Confirmed', confirmed: 'Confirmed', packed: 'Packed', handed_to_delivery_partner: 'Ready for Pickup', out_for_delivery: 'Out for Delivery', delivered: 'Delivered', cancelled: 'Cancelled', refunded: 'Refunded' };
+      var first = Array.isArray(row.items) && row.items[0] || {};
+      out.status = statusLabels[row.status] || row.status;
+      out.deliveryPartnerId = row.rider_id;
+      out.deliveryPartnerUid = row.rider_id;
+      out.orderedAt = row.created_at;
+      out.productName = out.productName || first.name || 'Customer order';
+      out.category = out.category || first.category || '';
+      out.qty = out.qty || first.qty || 1;
+    }
     return out;
   }
   // The vendor app publishes its approved catalogue as JSON rows in these
@@ -160,6 +177,9 @@
     return ref.max ? values.slice(0, ref.max) : values;
   }
   function orderRow(data) {
+    // A medicine proof must not be silently discarded while proof storage is
+    // being migrated. Block these orders until secure storage is implemented.
+    if (data.medicalIdRequired) throw new Error('Orders requiring medical verification are temporarily unavailable.');
     var status = String(data.status || 'placed').toLowerCase().replace(/\s+/g, '_');
     if ({ handedover: 1, handovered: 1, shipped: 1 }[status]) status = 'handed_to_delivery_partner';
     if (status === 'out_for_delivery') status = 'out_for_delivery';
@@ -220,10 +240,30 @@
   Collection.prototype.onSnapshot = function (success, failure) {
     var ref = this, stopped = false, channel;
     function load() { return ref.get().then(function (result) { if (!stopped) success(result); }).catch(function (error) { if (!stopped && failure) failure(error); }); }
-    waitForConfig().then(function (api) { load(); if (['orders', 'notifications'].indexOf(ref.table) >= 0) channel = api.channel('jora-' + ref.table + '-' + Math.random().toString(36).slice(2)).on('postgres_changes', { event: '*', schema: 'public', table: ref.table }, load).subscribe(); }).catch(function (error) { if (failure) failure(error); });
+    waitForConfig().then(function (api) {
+      load();
+      var liveTable = ref.table;
+      if (ref.table === 'shops') liveTable = 'market_shops';
+      if (ref.table === 'products') liveTable = 'market_products';
+      if (['orders', 'notifications', 'market_shops', 'market_products'].indexOf(liveTable) >= 0) {
+        channel = api.channel('jora-' + liveTable + '-' + Math.random().toString(36).slice(2))
+          .on('postgres_changes', { event: '*', schema: 'public', table: liveTable }, load)
+          .subscribe();
+      }
+    }).catch(function (error) { if (failure) failure(error); });
     return function () { stopped = true; if (channel && client) client.removeChannel(channel); };
   };
-  Collection.prototype.update = function (data) { var ref = this; return waitForConfig().then(function (api) { return api.from(ref.table).update(data).eq('id', ref.id).then(function (result) { if (result.error) throw result.error; }); }); };
+  Collection.prototype.update = function (data) {
+    var ref = this;
+    return waitForConfig().then(function (api) {
+      if (ref.table === 'orders') {
+        var action = data.customerConfirmed === true ? 'confirm' : data.customerConfirmed === false ? 'dispute' : String(data.status || '').toLowerCase() === 'cancelled' ? 'cancel' : null;
+        if (!action) throw new Error('Unsupported order change.');
+        return api.rpc('jora_order_action', { p_order_id: ref.id, p_action: action, p_payload: {} }).then(function (result) { if (result.error) throw result.error; });
+      }
+      return api.from(ref.table).update(data).eq('id', ref.id).then(function (result) { if (result.error) throw result.error; });
+    });
+  };
 
   var auth = {
     get currentUser() { return currentUser; },
