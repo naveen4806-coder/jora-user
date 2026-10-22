@@ -89,10 +89,27 @@
         '</section>' + links() +
       '</main>';
   }
+  function loading() {
+    app.innerHTML = JoraShell.nav('account') + '<main class="jora-page"><div class="jora-empty" role="status" aria-live="polite">Loading your account…</div></main>';
+  }
+  function pause(milliseconds) { return new Promise(function (resolve) { setTimeout(resolve, milliseconds); }); }
+  async function retry(operation) {
+    var lastError;
+    for (var attempt = 0; attempt < 3; attempt += 1) {
+      try { return await operation(); }
+      catch (error) {
+        lastError = error;
+        if (attempt === 2) break;
+        await pause(350 * (attempt + 1));
+      }
+    }
+    throw lastError;
+  }
   async function load() {
     try {
-      var api = await JoraSupabase.ready();
-      var result = await api.auth.getUser();
+      loading();
+      var api = await retry(function () { return JoraSupabase.ready(); });
+      var result = await retry(function () { return api.auth.getUser(); });
       var user = result.data && result.data.user;
       if (!user) { guest(api); return; }
       if (new URLSearchParams(window.location.search).get('entry') === '1') {
@@ -100,7 +117,7 @@
         return;
       }
       document.body.classList.remove('jora-auth-entry');
-      var found = await api.from('profiles').select('*').eq('id', user.id).maybeSingle();
+      var found = await retry(function () { return api.from('profiles').select('*').eq('id', user.id).maybeSingle(); });
       if (found.error) throw found.error;
       var profile = found.data || { id: user.id, full_name: (user.user_metadata && user.user_metadata.full_name) || '', email: user.email || '', phone: '', address: '', avatar_url: null };
       form(user, profile);
