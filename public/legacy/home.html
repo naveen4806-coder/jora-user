@@ -2023,7 +2023,7 @@ nav::before{background:linear-gradient(90deg,transparent,rgba(243,53,32,.24),tra
     <div class="dcm-order-strip" id="dcm-order-strip"><div class="dcm-order-icon" id="dcm-order-icon">📦</div><div style="flex:1;min-width:0"><div class="dcm-order-name" id="dcm-order-name">â€”</div><div class="dcm-order-shop" id="dcm-order-shop">â€”</div></div><div class="dcm-order-total" id="dcm-order-total">â€”</div></div>
     <div id="dcm-question-area"><div class="dcm-question"><div class="dcm-q-label">Did you receive your order?</div></div><div class="dcm-actions"><button class="btn-dcm-yes" onclick="customerConfirmReceived(true)"><span class="dcm-btn-icon">✅</span><span class="dcm-btn-label">Yes, I got it!</span><span class="dcm-btn-sub">Order received</span></button><button class="btn-dcm-no" onclick="customerConfirmReceived(false)"><span class="dcm-btn-icon">❌</span><span class="dcm-btn-label">I did NOT get it</span><span class="dcm-btn-sub">Report issue</span></button></div></div>
     <div class="dcm-result dcm-result-ok" id="dcm-result-ok"><div class="dcm-result-icon">🎊</div><div class="dcm-result-title">Thank you for confirming!</div><div class="dcm-result-sub">We're glad your order reached you safely. Enjoy your purchase!</div><button class="dcm-result-btn" onclick="closeDelConfirmModal()">Close</button></div>
-    <div class="dcm-result dcm-result-err" id="dcm-result-err"><div class="dcm-result-icon">🚨</div><div class="dcm-result-title">Issue reported!</div><div class="dcm-result-sub">We've flagged this. Our support team will resolve this for you.</div><button class="dcm-result-btn" onclick="closeDelConfirmModal()">Close</button></div>
+    <div class="dcm-result dcm-result-err" id="dcm-result-err"><div class="dcm-result-icon">🚨</div><div class="dcm-result-title">Issue recorded</div><div class="dcm-result-sub">Contact support for help with this order.</div><button class="dcm-result-btn" onclick="closeDelConfirmModal()">Close</button></div>
     </div>
   </div>
 </div>
@@ -3342,12 +3342,25 @@ function hasDeliveryLocation(){return validCoordinates(_userLat,_userLng);}
 function shopIsNearby(shop){return hasDeliveryLocation()&&!!shop&&validCoordinates(shop.lat,shop.lng)&&haversine(Number(_userLat),Number(_userLng),Number(shop.lat),Number(shop.lng))<=7;}
 function productIsNearby(product){return _shops.some(function(shop){return shop.id===product.shopId&&shopIsNearby(shop);});}
 function getVisibleNearbyShops(){
-  var list=_shops.filter(shopIsNearby);
+  // The marketplace catalogue is shared with the All Shops page.  Do not
+  // hide a newly published shop merely because either side has not supplied
+  // a map coordinate yet.  Shops with a known distance stay first; the
+  // remaining live shops follow, so Home and All Shops stay in sync.
+  var list=_shops.filter(function(shop){return shop&&shop.active!==false&&shop.isOpen!==false;});
   if(_searchTerm){list=list.filter(function(s){var sm=productMatchesTerm(s,_searchTerm);var pm=_products.some(function(p){return p.shopId===s.id&&productMatchesTerm(p,_searchTerm);});return sm||pm;});}
   if(_activeCategory||_activeSubCategory){list=list.filter(function(s){return _products.some(function(p){return p.shopId===s.id&&productMatchesActiveFilters(p,s);});});}
   var lat=effectiveLat(),lng=effectiveLng();
-  if(!hasDeliveryLocation())return [];
-  return list.map(function(s){return Object.assign({},s,{dist:haversine(lat,lng,s.lat,s.lng)});}).filter(function(s){return s.dist<=7;}).sort(function(a,b){return a.dist-b.dist;});
+  if(!hasDeliveryLocation())return list;
+  return list.map(function(s){
+    var distance=validCoordinates(s.lat,s.lng)?haversine(lat,lng,s.lat,s.lng):null;
+    return Object.assign({},s,{dist:distance});
+  }).sort(function(a,b){
+    var aKnown=Number.isFinite(a.dist),bKnown=Number.isFinite(b.dist);
+    if(aKnown&&bKnown)return a.dist-b.dist;
+    if(aKnown)return-1;
+    if(bKnown)return 1;
+    return String(a.name||'').localeCompare(String(b.name||''));
+  });
 }
 var _shopView='list',shopsMap=null,shopsMapLayer=null,shopsUserMarker=null;
 function setShopView(view,scrollToResults){
@@ -3408,20 +3421,6 @@ function renderShops(){
   var grid=document.getElementById('stores-grid'),empty=document.getElementById('stores-empty'),note=document.getElementById('nearby-note'),resetB=document.getElementById('reset-btn'),lbl=document.getElementById('stores-lbl'),productsPanel=document.getElementById('shop-products-panel');
   var emptyTitle=document.getElementById('stores-empty-title'),emptySub=document.getElementById('stores-empty-sub'),emptyLink=document.getElementById('stores-empty-link'),emptyLinkText=document.getElementById('stores-empty-link-txt'),resetTxt=document.getElementById('reset-btn-txt');
   var hasFilters=!!(_searchTerm||_activeCategory);
-  if(!hasDeliveryLocation()){
-    grid.classList.remove('single-store');
-    lbl.textContent=t('stores_nearby');
-    note.style.display='none';
-    resetB.style.display=hasFilters?'inline-flex':'none';
-    if(resetTxt)resetTxt.textContent=t('clear_filters');
-    if(emptyTitle)emptyTitle.textContent=t('stores_need_location_title');
-    if(emptySub)emptySub.textContent=t('stores_need_location_sub');
-    if(emptyLink){if(emptyLinkText)emptyLinkText.textContent=t('location_add');emptyLink.onclick=function(){openMapModal();};}
-    var noLocMapPanel=document.getElementById('shop-map-panel');if(noLocMapPanel)noLocMapPanel.classList.remove('show');
-    setShopView('list');
-    if(productsPanel)productsPanel.classList.remove('show');
-    grid.innerHTML='';grid.style.display='none';empty.style.display='block';return;
-  }
   var list=getVisibleNearbyShops();
   grid.classList.toggle('single-store',list.length===1);
   lbl.textContent=(_activeCategory?_activeCategory+' · ':'')+t('stores_nearby')+' ('+list.length+')';
@@ -3768,10 +3767,10 @@ function closeOrdersModal(){document.getElementById('orders-modal').classList.re
 function renderOrdersModal(){
   var body=document.getElementById('orders-body');
   var orders=_ordersCache||[];
-  orders.forEach(function(o){if(o.deliveryAwaitingCustomer)o.status='Delivered';});
+  // Keep the real status until the customer confirms the delivery.
   if(!orders.length){body.innerHTML='<div class="order-empty"><div class="order-empty-icon">📦</div><div class="order-empty-title">No orders yet</div><div class="order-empty-sub">Browse shops and place your first order.</div></div>';return;}
   var filtered=filterOrders(orders);
-  function cb(o){if(o.status!=='Delivered'||(o.customerConfirmed!==null&&o.customerConfirmed!==undefined))return'';return'<div class="delivery-confirm-banner"><div class="dcb-text"><div class="dcb-title">Did you receive this order?</div><div class="dcb-sub">Please confirm delivery.</div></div><button class="btn-confirm-received" onclick="openDelConfirmModal(\''+o.id+'\')">Confirm →</button></div>';}
+  function cb(o){if(!o.deliveryAwaitingCustomer||(o.customerConfirmed!==null&&o.customerConfirmed!==undefined))return'';return'<div class="delivery-confirm-banner"><div class="dcb-text"><div class="dcb-title">Did you receive this order?</div><div class="dcb-sub">Please confirm delivery.</div></div><button class="btn-confirm-received" onclick="openDelConfirmModal(\''+o.id+'\')">Confirm →</button></div>';}
   body.innerHTML='<div class="orders-shell">'
     +renderOrdersSummary(orders)
     +'<div class="orders-toolbar"><div class="orders-title-block"><h3>Order Centre</h3><p>Track every order, manage delivery, and start returns or refunds from one place.</p></div><div class="orders-filters">'
