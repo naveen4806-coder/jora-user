@@ -36,6 +36,15 @@ document.addEventListener('click',function(event){var button=event.target.closes
 document.querySelector('.nav').insertAdjacentHTML('beforeend','<a class="back" href="shops.html">All shops</a>');
 ;(function(){function rename(root){var w=document.createTreeWalker(root||document.body,NodeFilter.SHOW_TEXT),n;while(n=w.nextNode()){if(n.parentElement&&/^(SCRIPT|STYLE)$/i.test(n.parentElement.tagName))continue;n.nodeValue=n.nodeValue.replace(/ZORRA/g,'JORA').replace(/Zorra/g,'Jora').replace(/zorra/g,'jora');}}rename();new MutationObserver(function(m){m.forEach(function(x){x.addedNodes.forEach(function(n){if(n.nodeType===1)rename(n);else if(n.nodeType===3&&n.parentElement&&!/^(SCRIPT|STYLE)$/i.test(n.parentElement.tagName))n.nodeValue=n.nodeValue.replace(/ZORRA/g,'JORA').replace(/Zorra/g,'Jora').replace(/zorra/g,'jora');});});}).observe(document.body,{childList:true,subtree:true});document.title=document.title.replace(/Zorra/g,'Jora');})();
 </script>
+<script id="jora-product-closed-state">
+(function(){
+  function shopIsClosed(){return !!(shop&&(shop.isOpen===false||shop.is_open===false||String(shop.status||'').toLowerCase()==='closed'));}
+  var baseRender=window.renderProduct,baseAdd=window.addToCart;
+  window.renderProduct=function(){var result=baseRender.apply(this,arguments);if(!shopIsClosed())return result;var shell=document.getElementById('product-shell');shell.classList.add('jora-closed-product');var badge=shell.querySelector('.badge'),stock=shell.querySelector('.stock'),buttons=shell.querySelectorAll('.purchase button');if(badge)badge.textContent='Closed';if(stock){stock.textContent='Shop is currently closed';stock.classList.add('out');}buttons.forEach(function(button){button.disabled=true;});var add=shell.querySelector('.add'),buy=shell.querySelector('.buy');if(add)add.textContent='Shop closed';if(buy)buy.textContent='Shop closed';return result;};
+  window.addToCart=function(orderNow){if(shopIsClosed()){toast('This shop is currently closed. Please try again when it reopens.');return;}return baseAdd.apply(this,arguments);};
+})();
+</script>
+<style id="jora-product-closed-style">.jora-closed-product .gallery,.jora-closed-product .gallery img{filter:grayscale(1);opacity:.76}.jora-closed-product .badge{background:#3b4540!important;border-color:#3b4540!important}.jora-closed-product .purchase button:disabled{opacity:.62;cursor:not-allowed}</style>
 <link rel="stylesheet" href="jora-shell.css">
 <script src="jora-page-nav.js"></script><script src="jora-product-cart-link.js"></script><script src="jora-wishlist.js"></script>
 </body></html>
