@@ -36,3 +36,10 @@ html{max-width:100%;overflow-x:clip;-webkit-text-size-adjust:100%;text-size-adju
 
 /* Closed shops remain discoverable, but their catalogue is visibly unavailable. */
 .jora-closed-card{position:relative}.jora-closed-card .jora-card__image,.jora-closed-card img{filter:grayscale(1) contrast(.82);opacity:.7}.jora-closed-tag,.jora-open-tag{display:inline-flex;align-items:center;min-height:24px;margin:0 0 8px;padding:3px 9px;border-radius:999px;color:#fff;font-size:.68rem;font-weight:850;letter-spacing:.05em;line-height:1;text-transform:uppercase}.jora-closed-tag{background:#3f4742}.jora-open-tag{background:#15803d}.jora-closed-card .jora-meta{color:#9b5b55}
+/* Page navigation: only the icon receives interactive emphasis. */
+.jora-bottomnav a:hover,.jora-bottomnav a:active{background:transparent!important;color:var(--j-muted)!important;box-shadow:none!important;transform:none!important}
+.jora-bottomnav a .jora-nav-icon{transition:color .16s ease,background .16s ease,box-shadow .16s ease,transform .16s ease!important}
+.jora-bottomnav a:hover .jora-nav-icon,.jora-bottomnav a:focus-visible .jora-nav-icon,.jora-bottomnav a:active .jora-nav-icon{background:rgba(22,163,74,.14)!important;color:#168b48!important;box-shadow:0 0 0 4px rgba(22,163,74,.12),0 0 18px rgba(22,163,74,.38)!important;transform:scale(1.07)!important}
+.jora-bottomnav a:active .jora-nav-icon{transform:scale(.93)!important}
+.jora-bottomnav a:focus-visible{outline:0!important}.jora-bottomnav a:focus-visible .jora-nav-icon{outline:3px solid rgba(22,163,74,.6);outline-offset:2px}
+@media(prefers-reduced-motion:reduce){.jora-bottomnav a .jora-nav-icon{transition:none!important}}
