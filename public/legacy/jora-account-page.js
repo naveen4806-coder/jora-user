@@ -145,7 +145,6 @@
     function setEditMode(open) {
       form.hidden = !open;
       form.setAttribute('aria-hidden', String(!open));
-      detailsButton.setAttribute('aria-expanded', 'true');
       if (!open) return;
       window.requestAnimationFrame(function () {
         form.scrollIntoView({ behavior: 'auto', block: 'start' });
@@ -153,9 +152,15 @@
       });
     }
     detailsButton.onclick = function () {
-      profileCard.hidden = false;
-      profileCard.setAttribute('aria-hidden', 'false');
-      detailsButton.setAttribute('aria-expanded', 'true');
+      var willOpen = profileCard.hidden;
+      profileCard.hidden = !willOpen;
+      profileCard.setAttribute('aria-hidden', String(!willOpen));
+      detailsButton.setAttribute('aria-expanded', String(willOpen));
+      if (!willOpen) {
+        setEditMode(false);
+        detailsButton.focus({ preventScroll: true });
+        return;
+      }
       profileCard.scrollIntoView({ behavior: 'auto', block: 'start' });
     };
     editButton.onclick = function () { setEditMode(true); };
