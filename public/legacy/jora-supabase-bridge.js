@@ -134,6 +134,10 @@
   function marketRow(table, row) {
     var data = Object.assign({}, row && row.data || {});
     if (table === 'shops') {
+      // A temporarily closed shop is still a published marketplace shop.
+      // Keep `active` for true publication/removal state and carry its
+      // opening status separately so the customer UI can show it as closed.
+      var isOpen = data.isOpen !== false && data.is_open !== false && String(data.status || '').toLowerCase() !== 'closed';
       return Object.assign(data, {
         id: row.vendor_shop_id,
         owner_id: data.ownerUid || data.vendorId || row.vendor_id || '',
@@ -141,7 +145,8 @@
         banner_url: data.banner_url || data.banner || '',
         latitude: data.latitude == null ? data.lat : data.latitude,
         longitude: data.longitude == null ? data.lng : data.longitude,
-        active: data.active !== false && data.isOpen !== false,
+        active: data.active !== false || !isOpen,
+        isOpen: isOpen,
         created_at: data.createdAt || row.updated_at,
         updated_at: row.updated_at
       });
