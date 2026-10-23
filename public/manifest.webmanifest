@@ -1,0 +1,23 @@
+{
+  "name": "Jora - Local Shopping & Delivery",
+  "short_name": "Jora",
+  "description": "Shop from nearby stores and track local deliveries.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#f8faf8",
+  "theme_color": "#16A34A",
+  "icons": [
+    {
+      "src": "/legacy/assets/jora-app-icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/legacy/assets/jora-app-icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}

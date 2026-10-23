@@ -148,7 +148,7 @@
       detailsButton.setAttribute('aria-expanded', 'true');
       if (!open) return;
       window.requestAnimationFrame(function () {
-        form.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        form.scrollIntoView({ behavior: 'auto', block: 'start' });
         document.getElementById('profile-name').focus({ preventScroll: true });
       });
     }
@@ -156,7 +156,7 @@
       profileCard.hidden = false;
       profileCard.setAttribute('aria-hidden', 'false');
       detailsButton.setAttribute('aria-expanded', 'true');
-      profileCard.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      profileCard.scrollIntoView({ behavior: 'auto', block: 'start' });
     };
     editButton.onclick = function () { setEditMode(true); };
     cancelButton.onclick = function () {
