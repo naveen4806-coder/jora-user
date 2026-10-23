@@ -52,23 +52,6 @@ function LegacyFrame() {
   const onLoad = (event) => {
     setReady(true);
     const frameDocument = event.currentTarget.contentDocument;
-    if (frameDocument) {
-      const viewport = frameDocument.querySelector('meta[name="viewport"]');
-      if (viewport) viewport.content = 'width=device-width, initial-scale=1, viewport-fit=cover';
-      if (!frameDocument.getElementById('jora-premium-layer-css')) {
-        const premiumCss = frameDocument.createElement('link');
-        premiumCss.id = 'jora-premium-layer-css';
-        premiumCss.rel = 'stylesheet';
-        premiumCss.href = '/legacy/jora-premium-layer.css';
-        frameDocument.head.appendChild(premiumCss);
-      }
-      if (!frameDocument.getElementById('jora-premium-layer-js')) {
-        const premiumJs = frameDocument.createElement('script');
-        premiumJs.id = 'jora-premium-layer-js';
-        premiumJs.src = '/legacy/jora-premium-layer.js';
-        frameDocument.body.appendChild(premiumJs);
-      }
-    }
     if (frameDocument && !frameDocument.getElementById('jora-global-language-loader') && !event.currentTarget.contentWindow?.JoraLanguage) {
       const language = frameDocument.createElement('script');
       language.id = 'jora-global-language-loader';
