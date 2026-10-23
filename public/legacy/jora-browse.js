@@ -11,7 +11,7 @@
 
   function safe(value) { return S.esc(value == null ? '' : value); }
   function text(value) { return String(value == null ? '' : value).toLocaleLowerCase(); }
-  function isClosed(shop) { return !!(shop && (shop.isOpen === false || shop.is_open === false || String(shop.status || '').toLowerCase() === 'closed')); }
+  function isClosed(shop) { return !!(shop && (shop.active === false || shop.isOpen === false || shop.is_open === false || String(shop.status || '').toLowerCase() === 'closed')); }
   function productShopClosed(product) {
     var shops = S.read('ls_catalog_shops', []);
     var shop = shops.find(function (item) { return String(item.id) === String(product.shopId || product.shop_id || ''); });
@@ -77,7 +77,7 @@
         var closed = isClosed(shop);
         return '<a class="jora-card' + (closed ? ' jora-closed-card' : '') + '" data-browse-card data-category="' + safe(category) + '" data-search="' + safe(text(searchable)) + '" href="shop.html?id=' + encodeURIComponent(shop.id) + '">' +
           S.image(shop.logo || shop.image || shop.banner, shop.name || 'Shop') +
-          '<div class="jora-card__body">' + (closed ? '<span class="jora-closed-tag">Closed</span>' : '') + '<h2>' + safe(shop.name || 'Local shop') + '</h2><p>' + safe(shop.address || shop.area || category || 'Local seller') + '</p><div class="jora-meta">★ ' + safe(shop.rating || 'New') + (shop.timings ? ' · ' + safe(shop.timings) : '') + '</div></div></a>';
+          '<div class="jora-card__body">' + (closed ? '<span class="jora-closed-tag">Closed</span>' : '<span class="jora-open-tag">Open</span>') + '<h2>' + safe(shop.name || 'Local shop') + '</h2><p>' + safe(shop.address || shop.area || category || 'Local seller') + '</p><div class="jora-meta">★ ' + safe(shop.rating || 'New') + (shop.timings ? ' · ' + safe(shop.timings) : '') + '</div></div></a>';
       }).join('') + '</div><div id="browse-no-results" class="jora-empty" hidden>No matching shops. Try another search or filter.</div>';
     bindFilters();
   }
@@ -93,7 +93,7 @@
         var closed = productShopClosed(product);
         return '<article class="jora-card jora-product' + (closed ? ' jora-closed-card' : '') + '" data-browse-card data-category="' + safe(category) + '" data-search="' + safe(text(searchable)) + '">' +
           S.image(product.image || product.imageUrl, product.name || 'Product') +
-          '<div class="jora-card__body">' + (closed ? '<span class="jora-closed-tag">Closed</span>' : '') + '<h2>' + safe(product.name || 'Product') + '</h2><p>' + safe(product.shopName || product.brand || category) + '</p><div class="jora-price">' + S.money(product.price) + '</div><div class="jora-card-actions"><a class="jora-product-link" href="product.html?id=' + encodeURIComponent(product.id) + '">View product</a><button type="button" class="jora-wishlist-button" data-wishlist-product="' + safe(product.id) + '" aria-label="Add to wishlist">♡</button></div></div></article>';
+          '<div class="jora-card__body">' + (closed ? '<span class="jora-closed-tag">Closed</span>' : '<span class="jora-open-tag">Open</span>') + '<h2>' + safe(product.name || 'Product') + '</h2><p>' + safe(product.shopName || product.brand || category) + '</p><div class="jora-price">' + S.money(product.price) + '</div><div class="jora-card-actions"><a class="jora-product-link" href="product.html?id=' + encodeURIComponent(product.id) + '">View product</a><button type="button" class="jora-wishlist-button" data-wishlist-product="' + safe(product.id) + '" aria-label="Add to wishlist">♡</button></div></div></article>';
       }).join('') + '</div></section>';
     }).join('');
     box.innerHTML = toolbar(cats, 'Search products, shops or categories') + '<div class="jora-browse-products">' + sections + '</div><div id="browse-no-results" class="jora-empty" hidden>No matching products. Try another search or filter.</div>';

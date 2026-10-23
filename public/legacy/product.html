@@ -38,13 +38,13 @@ document.querySelector('.nav').insertAdjacentHTML('beforeend','<a class="back" h
 </script>
 <script id="jora-product-closed-state">
 (function(){
-  function shopIsClosed(){return !!(shop&&(shop.isOpen===false||shop.is_open===false||String(shop.status||'').toLowerCase()==='closed'));}
+  function shopIsClosed(){return !!(shop&&(shop.active===false||shop.isOpen===false||shop.is_open===false||String(shop.status||'').toLowerCase()==='closed'));}
   var baseRender=window.renderProduct,baseAdd=window.addToCart;
-  window.renderProduct=function(){var result=baseRender.apply(this,arguments);if(!shopIsClosed())return result;var shell=document.getElementById('product-shell');shell.classList.add('jora-closed-product');var badge=shell.querySelector('.badge'),stock=shell.querySelector('.stock'),buttons=shell.querySelectorAll('.purchase button');if(badge)badge.textContent='Closed';if(stock){stock.textContent='Shop is currently closed';stock.classList.add('out');}buttons.forEach(function(button){button.disabled=true;});var add=shell.querySelector('.add'),buy=shell.querySelector('.buy');if(add)add.textContent='Shop closed';if(buy)buy.textContent='Shop closed';return result;};
+  window.renderProduct=function(){var result=baseRender.apply(this,arguments),closed=shopIsClosed(),shell=document.getElementById('product-shell'),link=shell.querySelector('.shop-link');if(link)link.insertAdjacentHTML('beforeend',' <span class="jora-shop-status '+(closed?'is-closed':'is-open')+'">'+(closed?'Closed':'Open')+'</span>');if(!closed)return result;shell.classList.add('jora-closed-product');var badge=shell.querySelector('.badge'),stock=shell.querySelector('.stock'),buttons=shell.querySelectorAll('.purchase button');if(badge)badge.textContent='Closed';if(stock){stock.textContent='Shop is currently closed';stock.classList.add('out');}buttons.forEach(function(button){button.disabled=true;});var add=shell.querySelector('.add'),buy=shell.querySelector('.buy');if(add)add.textContent='Shop closed';if(buy)buy.textContent='Shop closed';return result;};
   window.addToCart=function(orderNow){if(shopIsClosed()){toast('This shop is currently closed. Please try again when it reopens.');return;}return baseAdd.apply(this,arguments);};
 })();
 </script>
-<style id="jora-product-closed-style">.jora-closed-product .gallery,.jora-closed-product .gallery img{filter:grayscale(1);opacity:.76}.jora-closed-product .badge{background:#3b4540!important;border-color:#3b4540!important}.jora-closed-product .purchase button:disabled{opacity:.62;cursor:not-allowed}</style>
+<style id="jora-product-closed-style">.jora-closed-product .gallery,.jora-closed-product .gallery img{filter:grayscale(1);opacity:.76}.jora-closed-product .badge{background:#3b4540!important;border-color:#3b4540!important}.jora-closed-product .purchase button:disabled{opacity:.62;cursor:not-allowed}.jora-shop-status{display:inline-flex;align-items:center;margin-left:3px;padding:3px 7px;border-radius:999px;color:#fff;font-size:.6rem;font-weight:900;letter-spacing:.05em;text-transform:uppercase}.jora-shop-status.is-open{background:#15803d}.jora-shop-status.is-closed{background:#3b4540}</style>
 <link rel="stylesheet" href="jora-shell.css">
 <script src="jora-page-nav.js"></script><script src="jora-product-cart-link.js"></script><script src="jora-wishlist.js"></script>
 </body></html>

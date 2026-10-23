@@ -3346,7 +3346,10 @@ function getVisibleNearbyShops(){
   // hide a newly published shop merely because either side has not supplied
   // a map coordinate yet.  Shops with a known distance stay first; the
   // remaining live shops follow, so Home and All Shops stay in sync.
-  var list=_shops.filter(function(shop){return shop&&shop.active!==false;});
+  // In this catalogue, vendors use `active: false` for the close toggle.
+  // Keep those shops discoverable; only an explicitly deleted/removed record
+  // is excluded from Home.
+  var list=_shops.filter(function(shop){return shop&&!((shop.deleted===true||shop.isDeleted===true||shop.removed===true||String(shop.status||'').toLowerCase()==='removed'));});
   if(_searchTerm){list=list.filter(function(s){var sm=productMatchesTerm(s,_searchTerm);var pm=_products.some(function(p){return p.shopId===s.id&&productMatchesTerm(p,_searchTerm);});return sm||pm;});}
   if(_activeCategory||_activeSubCategory){list=list.filter(function(s){return _products.some(function(p){return p.shopId===s.id&&productMatchesActiveFilters(p,s);});});}
   var lat=effectiveLat(),lng=effectiveLng();
@@ -3439,7 +3442,7 @@ function renderShops(){
   }
   empty.style.display='none';grid.style.display=_shopView==='list'?'grid':'none';
   grid.innerHTML=list.map(function(s){
-    var closed=s.isOpen===false||s.is_open===false||String(s.status||'').toLowerCase()==='closed';
+    var closed=s.active===false||s.isOpen===false||s.is_open===false||String(s.status||'').toLowerCase()==='closed';
     var badge=s.dist!==undefined?distBadge(s.dist):'';var pc=s.productCount||0;
     var sid=safeId(s.id);
     var uploadedShopImage=s.shopImage||s.shopImageUrl||s.shopPhoto||s.shopPhotoUrl||s.coverImage||s.coverImageUrl||s.logoUrl||s.logoURL||s.imageUrl||s.imageURL||s.image||s.photo||s.logo||s.cover||s.banner||'';
@@ -3448,7 +3451,7 @@ function renderShops(){
     var offerLine=s.offer||s.deal||s.discountText||s.tagline||((s.category||t('shop_chip'))+' shop');
     var deliveryTime=s.deliveryTime||s.eta||s.estimatedDelivery||'25 - 35 min';
     return '<a class="store-card'+(closed?' jora-closed-card':'')+'" href="shop.html?id='+sid+'" onclick="goToShopPage(decodeURIComponent(\''+sid+'\'));return false" style="--store-img:url(\''+eh(img||fallbackImg)+'\')">'+
-      '<div class="store-topline">'+(closed?'<span class="jora-closed-tag">Closed</span>':'<span class="store-spotlight">'+eh(offerLine)+'</span>')+'</div>'+
+      '<div class="store-topline">'+(closed?'<span class="jora-closed-tag">Closed</span>':'<span class="jora-open-tag">Open</span>')+'</div>'+
       '<div class="store-icon"><svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg></div>'+
       '<div class="store-name">'+eh(s.name)+'</div>'+
       '<div class="store-meta"><svg viewBox="0 0 24 24"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z"/><circle cx="12" cy="9" r="2.5"/></svg>'+eh(s.address?s.address.split(',').slice(-2).join(',').trim():(s.area||s.city||s.category||t('shop_chip')))+'</div>'+
@@ -3544,7 +3547,7 @@ function closeShopModal(){document.getElementById('shop-modal').classList.remove
 
 function productCardHtml(p,shop){
   shop=shop||{};
-  var closed=shop.isOpen===false||shop.is_open===false||String(shop.status||'').toLowerCase()==='closed';
+  var closed=shop.active===false||shop.isOpen===false||shop.is_open===false||String(shop.status||'').toLowerCase()==='closed';
   var pid=safeId(p.id),shopId=safeId(p.shopId);
   var category=p.category||t('new_arrival');
   var price=parseFloat(p.price)||0;
@@ -3555,7 +3558,7 @@ function productCardHtml(p,shop){
   var eta=(p.deliveryTime||'28 - 32 min');
   return '<div class="np-card'+(closed?' jora-closed-card':'')+'" id="pcard-'+pid+'" onclick="goToProductPage(decodeURIComponent(\''+pid+'\'))" role="link" tabindex="0">'+
     '<div class="np-media">'+
-      (closed?'<span class="jora-closed-tag">Closed</span>':'')+
+      (closed?'<span class="jora-closed-tag">Closed</span>':'<span class="jora-open-tag">Open</span>')+
       '<button class="np-wish '+(inWish?'wished':'')+'" id="wish-'+pid+'" onclick="event.stopPropagation();toggleWish(decodeURIComponent(\''+pid+'\'),decodeURIComponent(\''+shopId+'\'))" aria-label="Save product"><svg viewBox="0 0 24 24"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1-1.1a5.5 5.5 0 0 0-7.8 7.8l1.1 1.1L12 21.2l7.7-7.7 1.1-1.1a5.5 5.5 0 0 0 0-7.8z"/></svg></button>'+
       (p.image?'<img src="'+eh(p.image)+'" alt="'+eh(p.name||'Product')+'" loading="lazy" onerror="this.style.display=\'none\';this.nextElementSibling.style.display=\'flex\'">':'')+
       '<div class="np-media-ph" style="'+(p.image?'display:none':'')+'">'+prodIco(category)+'</div>'+
@@ -4884,5 +4887,5 @@ body.theme-dark{--jora-dark-bg:#101B14;--jora-dark-surface:#17261C;--jora-dark-r
 .search-wrap,.search-row,.search-box-wrap{min-width:0;max-width:100%}.search-bar .loc-btn,.search-bar .search-box{box-sizing:border-box;max-width:100%}@media(max-width:767px){.search-bar .search-box{display:flex!important;min-width:0!important;max-width:100%!important;overflow:hidden!important}.search-bar .search-box input{flex:1 1 0!important;width:0!important;min-width:0!important;max-width:none!important}.search-bar .search-box button{align-self:center!important;flex:0 0 auto!important;min-height:0!important;white-space:nowrap!important;box-shadow:none!important;transform:none!important}.search-bar .search-box button:active{box-shadow:none!important;transform:none!important}.search-bar .loc-btn,.search-bar .search-box{width:100%!important;margin-left:0!important;margin-right:0!important}}
 </style>
 <style id="jora-closed-shop-state">
-.jora-closed-card{position:relative}.store-card.jora-closed-card{filter:grayscale(1);opacity:.76}.store-card.jora-closed-card .jora-closed-tag{filter:none;position:relative;z-index:2}.np-card.jora-closed-card .np-media,.np-card.jora-closed-card .np-media img{filter:grayscale(1);opacity:.74}.jora-closed-tag{display:inline-flex;align-items:center;justify-content:center;min-height:24px;padding:4px 9px;border-radius:999px;background:#3b4540!important;color:#fff!important;font-size:.66rem!important;font-weight:850!important;letter-spacing:.06em;text-transform:uppercase;line-height:1;box-shadow:0 2px 6px rgba(0,0,0,.16)}.np-media .jora-closed-tag{position:absolute;top:10px;left:10px;z-index:3}.store-topline .jora-closed-tag{margin:0}
+.jora-closed-card{position:relative}.store-card.jora-closed-card{filter:grayscale(1);opacity:.76}.store-card.jora-closed-card .jora-closed-tag{filter:none;position:relative;z-index:2}.np-card.jora-closed-card .np-media,.np-card.jora-closed-card .np-media img{filter:grayscale(1);opacity:.74}.jora-closed-tag,.jora-open-tag{display:inline-flex;align-items:center;justify-content:center;min-height:24px;padding:4px 9px;border-radius:999px;color:#fff!important;font-size:.66rem!important;font-weight:850!important;letter-spacing:.06em;text-transform:uppercase;line-height:1;box-shadow:0 2px 6px rgba(0,0,0,.16)}.jora-closed-tag{background:#3b4540!important}.jora-open-tag{background:#15803d!important}.np-media .jora-closed-tag,.np-media .jora-open-tag{position:absolute;top:10px;left:10px;z-index:3}.store-topline .jora-closed-tag,.store-topline .jora-open-tag{margin:0}
 </style>
