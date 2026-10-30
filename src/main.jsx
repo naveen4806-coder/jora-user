@@ -7,7 +7,7 @@ const LEGACY_PAGES = new Set(['opening.html', 'index.html', 'home.html', 'shop.h
 function currentLegacyPage() {
   const page = window.location.pathname.split('/').pop();
   // Authentication is the actual Jora index experience. Home is shown only
-  // after the customer has an active Supabase session.
+  // after the customer has an active Jora API session.
   return LEGACY_PAGES.has(page) ? page : 'account.html?entry=1&next=home.html';
 }
 
@@ -32,16 +32,12 @@ function LegacyFrame() {
   }, []);
   React.useEffect(() => setReady(false), [page]);
   React.useEffect(() => {
-    const config = {
-      type: 'jora:supabase-config',
-      url: import.meta.env.VITE_SUPABASE_URL || '',
-      key: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY || ''
-    };
+    const config = { type: 'jora:mongo-config', url: import.meta.env.VITE_JORA_API_URL || `${window.location.origin}/api` };
     const sendConfig = (target) => {
       if (config.url && config.key && target) target.postMessage(config, window.location.origin);
     };
     const onMessage = (event) => {
-      if (event.origin !== window.location.origin || event.data?.type !== 'jora:supabase-config-request') return;
+      if (event.origin !== window.location.origin || event.data?.type !== 'jora:mongo-config-request') return;
       sendConfig(event.source);
     };
     window.addEventListener('message', onMessage);
@@ -58,9 +54,8 @@ function LegacyFrame() {
       language.src = '/legacy/jora-global-language.js';
       frameDocument.head.appendChild(language);
     }
-    const url = import.meta.env.VITE_SUPABASE_URL || '';
-    const key = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY || '';
-    if (url && key) event.currentTarget.contentWindow?.postMessage({ type: 'jora:supabase-config', url, key }, window.location.origin);
+    const url = import.meta.env.VITE_JORA_API_URL || `${window.location.origin}/api`;
+    event.currentTarget.contentWindow?.postMessage({ type: 'jora:mongo-config', url }, window.location.origin);
   };
   return <div className="legacy-frame-shell" aria-busy={!ready}>
     {!ready && <div className="legacy-frame-loader" aria-label="Loading Jora"><span className="legacy-loader-mark">J</span><span>Loading Jora</span></div>}

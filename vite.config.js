@@ -3,26 +3,27 @@ import react from '@vitejs/plugin-react';
 import { mkdirSync, writeFileSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 
-// Legacy customer pages are also accessible directly on Vercel.  They cannot
-// read Vite's import.meta.env, so publish only the public Supabase runtime
-// values into a small generated file in the build output.
+// Legacy pages receive only the public API URL. MongoDB credentials remain
+// exclusively in server/.env and are never included in a browser build.
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), '');
   return {
     plugins: [
       react(),
       {
-        name: 'jora-legacy-supabase-runtime-config',
+        name: 'jora-legacy-mongo-runtime-config',
         closeBundle() {
-          const output = resolve(process.cwd(), 'dist/legacy/jora-supabase-runtime-config.js');
+          const output = resolve(process.cwd(), 'dist/legacy/jora-mongo-runtime-config.js');
           mkdirSync(dirname(output), { recursive: true });
           const config = {
-            url: env.VITE_SUPABASE_URL || '',
-            key: env.VITE_SUPABASE_PUBLISHABLE_KEY || ''
+            url: env.VITE_JORA_API_URL || '/api'
           };
-          writeFileSync(output, `window.__JORA_SUPABASE_CONFIG__=${JSON.stringify(config)};\n`, 'utf8');
+          writeFileSync(output, `window.__JORA_API_CONFIG__=${JSON.stringify(config)};\n`, 'utf8');
         }
       }
-    ]
+    ],
+    server: {
+      proxy: { '/api': { target: env.VITE_JORA_API_URL || 'http://127.0.0.1:4000', changeOrigin: true } }
+    }
   };
 });
