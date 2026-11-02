@@ -1,0 +1,20 @@
+import { connectDatabase } from '../config/db.js';
+import { hashPassword } from '../middleware/auth.js';
+import { Banner, Partner, PlatformFee, Product, TaxConfig, User, Vendor } from '../models/index.js';
+
+const password = process.env.SEED_PASSWORD;
+if (!password || password.length < 8) throw new Error('Set SEED_PASSWORD (at least 8 characters) before running npm run seed.');
+const upsertUser = async (data) => User.findOneAndUpdate({ email: data.email }, { ...data, passwordHash: await hashPassword(password) }, { upsert: true, new: true, setDefaultsOnInsert: true });
+await connectDatabase();
+const admin = await upsertUser({ name: 'Jora Admin', email: process.env.ADMIN_EMAIL || 'joraofficial@gmail.com', phone: '9000000000', role: 'admin' });
+const vendorUser = await upsertUser({ name: 'Jora Sample Vendor', email: 'vendor@example.com', phone: '9000000001', role: 'vendor' });
+const customer = await upsertUser({ name: 'Jora Sample User', email: 'user@example.com', phone: '9000000002', role: 'user' });
+const partnerUser = await upsertUser({ name: 'Jora Sample Partner', email: 'partner@example.com', phone: '9000000003', role: 'partner' });
+const vendor = await Vendor.findOneAndUpdate({ userRef: vendorUser._id }, { userRef: vendorUser._id, ownerName: vendorUser.name, phone: vendorUser.phone, email: vendorUser.email, status: 'approved', shop: { name: 'Jora Fresh Market', category: 'Groceries', description: 'Seeded demo shop', address: '100 Demo Road, Coimbatore', pincode: '641001', location: { type: 'Point', coordinates: [76.9558, 11.0168] }, openingHours: '08:00–22:00', isOpen: true } }, { upsert: true, new: true });
+const partner = await Partner.findOneAndUpdate({ userRef: partnerUser._id }, { userRef: partnerUser._id, name: partnerUser.name, phone: partnerUser.phone, vehicle: 'Bike', status: 'approved', isOnline: true, currentLocation: { type: 'Point', coordinates: [76.956, 11.017] }, workingArea: { center: { type: 'Point', coordinates: [76.956, 11.017] }, radiusKm: 3 }, slots: [] }, { upsert: true, new: true });
+const products = await Promise.all([{ name: 'Fresh Tomatoes', price: 40, stock: 100, category: 'Vegetables' }, { name: 'Whole Milk', price: 60, stock: 60, category: 'Dairy' }].map(data => Product.findOneAndUpdate({ vendorRef: vendor._id, name: data.name }, { ...data, vendorRef: vendor._id, shopRef: vendor._id, images: [], isAvailable: true }, { upsert: true, new: true })));
+await Promise.all(products.map(product => TaxConfig.findOneAndUpdate({ productRef: product._id }, { productRef: product._id, gstPercent: product.name === 'Whole Milk' ? 5 : 0, setByAdmin: admin._id }, { upsert: true })));
+await PlatformFee.findOneAndUpdate({ sourceRole: 'admin' }, { type: 'flat', value: 0, updatedBy: admin._id, sourceRole: 'admin' }, { upsert: true });
+await Banner.findOneAndUpdate({ title: 'Welcome to Jora' }, { title: 'Welcome to Jora', image: '', link: '', active: true, order: 1 }, { upsert: true });
+console.log(JSON.stringify({ seeded: true, admin: admin.email, vendor: vendorUser.email, user: customer.email, partner: partnerUser.email, vendorId: String(vendor._id), partnerId: String(partner._id) }));
+process.exit(0);

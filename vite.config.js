@@ -7,6 +7,11 @@ import { dirname, resolve } from 'node:path';
 // exclusively in server/.env and are never included in a browser build.
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), '');
+  const apiUrl = env.VITE_JORA_API_URL || 'http://127.0.0.1:4000/api';
+  // VITE_JORA_API_URL is the browser's API base and therefore ends in /api.
+  // Vite's proxy receives a path already beginning with /api, so its target
+  // must be the server origin to avoid forwarding /api/api/... and returning 404.
+  const apiOrigin = apiUrl.replace(/\/api\/?$/, '');
   return {
     plugins: [
       react(),
@@ -23,7 +28,7 @@ export default defineConfig(({ mode }) => {
       }
     ],
     server: {
-      proxy: { '/api': { target: env.VITE_JORA_API_URL || 'http://127.0.0.1:4000', changeOrigin: true } }
+      proxy: { '/api': { target: apiOrigin, changeOrigin: true } }
     }
   };
 });

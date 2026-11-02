@@ -8,6 +8,8 @@ const userSchema = new Schema({
   email: { type: String, required: true, unique: true, lowercase: true, trim: true },
   passwordHash: { type: String, required: true, select: false },
   phone: { type: String, trim: true, default: '' },
+  address: { type: String, trim: true, default: '' },
+  avatarUrl: { type: String, default: '' },
   role: { type: String, enum: ['customer', 'vendor', 'partner', 'admin'], required: true },
   active: { type: Boolean, default: true }
 }, timestamps);

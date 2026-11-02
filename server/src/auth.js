@@ -2,7 +2,7 @@ import jwt from 'jsonwebtoken';
 import { User } from './models.js';
 
 export function publicUser(user) {
-  return { id: String(user._id), uid: String(user._id), name: user.name, displayName: user.name, email: user.email, phone: user.phone, role: user.role, active: user.active };
+  return { id: String(user._id), uid: String(user._id), name: user.name, displayName: user.name, email: user.email, phone: user.phone, address: user.address, avatarUrl: user.avatarUrl, role: user.role, active: user.active };
 }
 export function signToken(user) {
   return jwt.sign({ sub: String(user._id), role: user.role }, process.env.JWT_SECRET, { expiresIn: '7d' });
