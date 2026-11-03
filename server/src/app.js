@@ -38,4 +38,4 @@ app.use(notFound);
 app.use(errorHandler);
 
 await connectDatabase();
-server.listen(env.port, () => console.log(`Jora Mongo API listening on ${env.port}`));
+server.listen(env.port, '0.0.0.0', () => console.log(`Jora Mongo API listening on ${env.port}`));
