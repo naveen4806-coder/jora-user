@@ -34,7 +34,7 @@ function LegacyFrame() {
   React.useEffect(() => {
     const config = { type: 'jora:mongo-config', url: import.meta.env.VITE_JORA_API_URL || `${window.location.origin}/api` };
     const sendConfig = (target) => {
-      if (config.url && config.key && target) target.postMessage(config, window.location.origin);
+      if (config.url && target) target.postMessage(config, window.location.origin);
     };
     const onMessage = (event) => {
       if (event.origin !== window.location.origin || event.data?.type !== 'jora:mongo-config-request') return;
