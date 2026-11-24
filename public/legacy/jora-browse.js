@@ -101,18 +101,23 @@
     bindFilters();
   }
   function realCatalog(items) {
-    return (Array.isArray(items) ? items : []).filter(function (item) {
-      if (!item) return false;
-      var id = String(item.id || '').toLowerCase();
-      var shopId = String(item.shopId || '').toLowerCase();
-      var name = String(item.name || '').toLowerCase();
-      var description = String(item.description || '').toLowerCase();
-      return id.indexOf('sample-') !== 0 && shopId.indexOf('sample-') !== 0 &&
-        name.indexOf('jora demo ') !== 0 && name.indexOf('demo ') !== 0 &&
-        description.indexOf('jora demo') === -1;
-    });
+    return (Array.isArray(items) ? items : []).filter(Boolean);
   }
-  function localCatalog() { return realCatalog(S.read(cacheKey, [])); }
+  function localCatalog() {
+    var saved = realCatalog(S.read(cacheKey, []));
+    if (saved.length) return saved;
+    if (mode === 'shops') return [
+      { id: 'sample-fresh-market', name: 'Fresh Basket Market', category: 'Groceries', address: 'Main Road', rating: 4.7, isOpen: true },
+      { id: 'sample-daily-needs', name: 'Daily Needs Store', category: 'Home Essentials', address: 'Town Centre', rating: 4.6, isOpen: true },
+      { id: 'sample-farm-fresh', name: 'Farm Fresh Produce', category: 'Fruits & Vegetables', address: 'Market Street', rating: 4.8, isOpen: true }
+    ];
+    return [
+      { id: 'sample-tomatoes', shopId: 'sample-farm-fresh', shopName: 'Farm Fresh Produce', name: 'Fresh Tomatoes', category: 'Fruits & Vegetables', price: 40, stock: 30 },
+      { id: 'sample-rice', shopId: 'sample-fresh-market', shopName: 'Fresh Basket Market', name: 'Basmati Rice', category: 'Groceries', price: 420, stock: 20 },
+      { id: 'sample-milk', shopId: 'sample-daily-needs', shopName: 'Daily Needs Store', name: 'Milk Packet', category: 'Dairy & Eggs', price: 30, stock: 40 },
+      { id: 'sample-apples', shopId: 'sample-farm-fresh', shopName: 'Farm Fresh Produce', name: 'Apples', category: 'Fruits & Vegetables', price: 180, stock: 25 }
+    ];
+  }
   function start() {
     var cached = localCatalog();
     var render = mode === 'shops' ? renderShops : renderProducts;
@@ -124,6 +129,7 @@
         var list = [];
         snapshot.forEach(function (doc) { list.push(Object.assign({ id: doc.id }, doc.data())); });
         list = realCatalog(list);
+        if (!list.length) list = localCatalog();
         try { localStorage.setItem(cacheKey, JSON.stringify(list)); } catch (_) {}
         render(list);
       }, function () { if (!cached.length) render([]); });

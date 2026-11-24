@@ -71,11 +71,11 @@
     var label = profile.full_name || user.email || 'Jora customer';
     app.innerHTML = JoraShell.nav('account') +
       '<main class="jora-page jora-account-page">' +
-        '<section class="jora-hero jora-account-hero"><div><p class="jora-eyebrow">Account</p><h1>My Profile</h1><p>Keep your delivery details and profile photo up to date.</p></div><button class="jora-button jora-profile-anchor" id="open-profile-details" type="button" aria-controls="my-profile" aria-expanded="false">My Profile</button></section>' +
-        '<section class="jora-card jora-account-card" id="my-profile" tabindex="-1" hidden aria-hidden="true">' +
+        '<section class="jora-hero jora-account-hero"><div><p class="jora-eyebrow">Account</p><h1>My Profile</h1><p>Your registered contact and delivery information.</p></div><button class="jora-button jora-profile-anchor" id="open-profile-details" type="button" aria-controls="my-profile" aria-expanded="true">Edit details</button></section>' +
+        '<section class="jora-card jora-account-card" id="my-profile" tabindex="-1" aria-hidden="false">' +
           '<div class="jora-account-card-heading"><div><p class="jora-eyebrow">Profile details</p><h2>Personal information</h2><p>Used for delivery updates and order support.</p></div></div>' +
           '<div class="jora-account-summary"><div class="jora-account-avatar" id="account-avatar">' + profileAvatar(avatar, label, user.email) + '</div>' +
-            '<div class="jora-account-identity"><h3 id="account-summary-name">' + esc(label) + '</h3><p>' + esc(user.email || profile.email) + '</p><p class="jora-profile-hint">View your saved delivery details or edit your profile.</p><p id="account-summary-note" class="jora-checkout-note" aria-live="polite"></p></div><button class="jora-icon-button" id="edit-profile" type="button" aria-label="Edit profile" title="Edit profile">✎</button>' +
+            '<div class="jora-account-identity"><h3 id="account-summary-name">' + esc(label) + '</h3><p>' + esc(user.email || profile.email) + '</p><p>' + esc(profile.phone || 'Mobile number not added') + '</p><p>' + esc([profile.address, profile.pincode].filter(Boolean).join(' · ') || 'Delivery location not added') + '</p><p class="jora-profile-hint">Your registered details are used for delivery updates and order support.</p><p id="account-summary-note" class="jora-checkout-note" aria-live="polite"></p></div><button class="jora-icon-button" id="edit-profile" type="button" aria-label="Edit profile" title="Edit profile">✎</button>' +
           '</div>' +
           '<form id="account-form" class="jora-form jora-account-form" hidden aria-hidden="true">' +
             '<div class="jora-form-intro"><h3>Edit your profile</h3><p>Update your details, then save when you are ready.</p></div>' +
@@ -154,18 +154,7 @@
         document.getElementById('profile-name').focus({ preventScroll: true });
       });
     }
-    detailsButton.onclick = function () {
-      var willOpen = profileCard.hidden;
-      profileCard.hidden = !willOpen;
-      profileCard.setAttribute('aria-hidden', String(!willOpen));
-      detailsButton.setAttribute('aria-expanded', String(willOpen));
-      if (!willOpen) {
-        setEditMode(false);
-        detailsButton.focus({ preventScroll: true });
-        return;
-      }
-      profileCard.scrollIntoView({ behavior: 'auto', block: 'start' });
-    };
+    detailsButton.onclick = function () { profileCard.hidden = false; profileCard.setAttribute('aria-hidden', 'false'); detailsButton.setAttribute('aria-expanded', 'true'); setEditMode(true); };
     editButton.onclick = function () { setEditMode(true); };
     cancelButton.onclick = function () {
       selected = null;
