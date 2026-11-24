@@ -152,8 +152,8 @@ body{background:radial-gradient(circle at 8% 8%,rgba(237,18,36,.09),transparent 
 </main>
 <section class="not-found" id="not-found" style="display:none"><h1>Shop Not Found</h1><p class="offer">This shop may have been removed or is no longer available.</p><div class="actions" style="justify-content:center"><a class="btn" href="home.html">Browse Shops</a></div></section>
 <script>
-firebase.initializeApp({});
-var db=firebase.firestore();
+jora.initializeApp({});
+var db=jora.firestore();
 var _shop=null,_products=[];
 function eh(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
 function param(k){return new URLSearchParams(location.search).get(k);}

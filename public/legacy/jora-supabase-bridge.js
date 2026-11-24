@@ -1,65 +1,65 @@
-/* MongoDB API compatibility layer for retained Jora customer pages.
-   The browser never connects directly to MongoDB. */
 (function () {
   'use strict';
-  var baseUrl = '', currentUser = null, readyPromise = null, configReadyResolve = null, configReady = new Promise(function (resolve) { configReadyResolve = resolve; }), authListeners = [], TOKEN_KEY = 'jora_mongo_access_token', REFRESH_KEY = 'jora_mongo_refresh_token';
-  function token() { return localStorage.getItem(TOKEN_KEY) || ''; }
-  function emit(user) { currentUser = user; authListeners.slice().forEach(function (fn) { try { fn(user); } catch (e) { console.error(e); } }); }
-  function toUser(row) { return row ? { uid: row.id || row.uid || row._id, email: row.email || '', displayName: row.name || row.displayName || '', role: row.role || 'customer', getIdToken: function () { return Promise.resolve(token()); } } : null; }
-  function refreshSession() { var refreshToken = localStorage.getItem(REFRESH_KEY) || ''; if (!refreshToken) return Promise.reject(new Error('Session expired.')); return fetch(baseUrl + '/auth/refresh', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ refreshToken: refreshToken }) }).then(function (response) { return response.json().catch(function () { return {}; }).then(function (body) { if (!response.ok) throw new Error(body.message || 'Session expired.'); localStorage.setItem(TOKEN_KEY, body.accessToken); localStorage.setItem(REFRESH_KEY, body.refreshToken); emit(toUser(body.user)); return body; }); }).catch(function (error) { localStorage.removeItem(TOKEN_KEY); localStorage.removeItem(REFRESH_KEY); emit(null); throw error; }); }
-  function request(path, options, retried) { options = options || {}; var headers = Object.assign({ 'Content-Type': 'application/json' }, options.headers || {}); if (token()) headers.Authorization = 'Bearer ' + token(); return fetch(baseUrl + path, Object.assign({}, options, { headers: headers })).then(function (response) { return response.json().catch(function () { return {}; }).then(function (body) { if (response.status === 401 && !retried && path !== '/auth/refresh' && localStorage.getItem(REFRESH_KEY)) return refreshSession().then(function () { return request(path, options, true); }); if (!response.ok) { var error = new Error(body.message || 'Request failed.'); error.code = body.code || (response.status === 401 ? 'auth/invalid-credential' : String(response.status)); throw error; } return body; }); }); }
-  function configure(config) { if (baseUrl || !config || !config.url) return; baseUrl = String(config.url).replace(/\/$/, ''); readyPromise = token() ? request('/auth/me').then(function (body) { emit(toUser(body.user)); return currentUser; }).catch(function () { localStorage.removeItem(TOKEN_KEY); emit(null); return null; }) : Promise.resolve(null).then(function (user) { emit(user); return user; }); if (configReadyResolve) configReadyResolve(); }
-  window.addEventListener('message', function (event) { if (event.origin === window.location.origin && event.data && event.data.type === 'jora:mongo-config') configure(event.data); });
-  try { window.parent.postMessage({ type: 'jora:mongo-config-request' }, window.location.origin); } catch (_) {}
-  if (window.__JORA_API_CONFIG__) configure(window.__JORA_API_CONFIG__);
-  if (!baseUrl) { var script = document.createElement('script'); script.src = 'jora-mongo-runtime-config.js'; script.async = true; script.onload = function () { configure(window.__JORA_API_CONFIG__); }; script.onerror = function () { configure({ url: window.location.origin + '/api' }); }; document.head.appendChild(script); }
-  // Wait for the parent Vite app or the generated runtime file.  The prior
-  // zero-delay fallback could permanently choose the Vercel site's /api before
-  // VITE_JORA_API_URL arrived, causing registration to fail in production.
-  function ready() { return baseUrl ? (readyPromise || Promise.resolve(null)) : configReady.then(function () { return readyPromise || Promise.resolve(null); }); }
-  function rowId(row) { return String(row && (row.id || row._id) || ''); }
-  function legacyOrder(row) { var labels = { placed: 'Confirmed', accepted_by_vendor: 'Accepted', preparing: 'Preparing', ready: 'Ready for Pickup', partner_assigned: 'Partner Assigned', partner_accepted: 'Partner Accepted', picked_up: 'Picked Up', on_the_way: 'Out for Delivery', delivered: 'Delivered', cancelled: 'Cancelled', rejected: 'Rejected' }, pricing = row.pricing || {}; return Object.assign({}, row, { id: rowId(row), customerUid: String(row.userRef || ''), vendorUid: String(row.vendorRef || ''), shopId: String(row.vendorRef || ''), deliveryPartnerId: row.partnerRef && String(row.partnerRef), deliveryFee: Number(pricing.deliveryCharge || 0), subtotal: Number(pricing.itemsTotal || 0), productTax: Number(pricing.gstTotal || 0), total: Number(pricing.grandTotal || 0), deliveryLat: row.address && row.address.location && row.address.location.coordinates && row.address.location.coordinates[1], deliveryLng: row.address && row.address.location && row.address.location.coordinates && row.address.location.coordinates[0], deliveryAddress: row.address && row.address.text, orderedAt: row.createdAt, status: labels[row.status] || row.status }); }
-  function legacyCatalog(row) { var shop = row.shop || {}; var point = shop.location || row.location || {}; return Object.assign({}, row, { id: rowId(row), ownerUid: row.userRef && String(row.userRef), vendorId: row.userRef && String(row.userRef), shopId: rowId(row), name: shop.name || row.name || '', category: shop.category || row.category || '', image: shop.logo || row.image || '', imageUrl: shop.logo || row.image || '', address: shop.address || row.address || '', phone: shop.phone || row.phone || '', isActive: row.status === 'approved' || row.active !== false, lat: point.coordinates && point.coordinates[1], lng: point.coordinates && point.coordinates[0], isOpen: shop.isOpen !== false }); }
-  function matches(rows, ref) { return rows.filter(function (row) { return ref.filters.every(function (filter) { return filter.op !== '==' || String(row[filter.field] == null ? '' : row[filter.field]) === String(filter.value == null ? '' : filter.value); }); }).slice(0, ref.max || rows.length); }
-  function Snap(row, exists) { this.id = rowId(row); this.exists = exists !== false; this._row = row || {}; } Snap.prototype.data = function () { return Object.assign({}, this._row); };
-  function Snapshot(rows) { this.docs = rows.map(function (row) { return new Snap(row); }); } Snapshot.prototype.forEach = function (fn) { this.docs.forEach(fn); };
-  function Collection(name, documentId) { this.name = name; this.id = documentId || ''; this.filters = []; this.max = 0; }
-  Collection.prototype.clone = function () { var next = new Collection(this.name, this.id); next.filters = this.filters.slice(); next.max = this.max; return next; };
+  var client, currentUser = null, listeners = [], clientReady;
+  var tables = { shops: 'vendors', products: 'products', orders: 'orders', users: 'profiles', product_reviews: 'product_reviews', admin_banners: 'banners', notifications: 'notifications', wishlists: 'wishlists' };
+  function getClient() {
+    if (client) return Promise.resolve(client);
+    if (window.parent && window.parent.__JORA_SUPABASE__) { client = window.parent.__JORA_SUPABASE__; return Promise.resolve(client); }
+    return new Promise(function (resolve, reject) {
+      window.addEventListener('message', function onReady(event) {
+        if (event.origin !== window.location.origin || event.data?.type !== 'jora:supabase-ready') return;
+        window.removeEventListener('message', onReady);
+        if (window.parent.__JORA_SUPABASE__) { client = window.parent.__JORA_SUPABASE__; resolve(client); } else reject(new Error('Supabase client was not available.'));
+      });
+      window.parent.postMessage({ type: 'jora:supabase-request' }, window.location.origin);
+    });
+  }
+  function userForLegacy(user) { return user ? { uid: user.id, email: user.email || '', displayName: user.user_metadata?.full_name || '', role: user.app_metadata?.role || user.user_metadata?.role || 'user', getIdToken: function () { return getClient().then(function (c) { return c.auth.getSession(); }).then(function (r) { return r.data.session?.access_token || ''; }); } } : null; }
+  function emit(user) { currentUser = userForLegacy(user); listeners.slice().forEach(function (fn) { fn(currentUser); }); }
+  function boot() { if (clientReady) return clientReady; clientReady = getClient().then(function (c) { return c.auth.getSession().then(function (r) { emit(r.data.session?.user || null); c.auth.onAuthStateChange(function (_, session) { emit(session?.user || null); }); return c; }); }); return clientReady; }
+  function id(row) { return String(row?.id || ''); }
+  function legacyRow(name, row) {
+    if (name === 'shops') return Object.assign({}, row, { shopId: row.id, ownerUid: row.user_id, vendorId: row.user_id, image: row.image_url || '', imageUrl: row.image_url || '', isActive: row.is_active !== false, isOpen: row.is_open !== false });
+    if (name === 'products') return Object.assign({}, row, { shopId: row.vendor_id, vendorId: row.vendor_id, image: row.image_url || '', isActive: row.is_active !== false, desc: row.description || '' });
+    if (name === 'orders') return Object.assign({}, row, { customerUid: row.user_id, vendorUid: row.vendor_id, shopId: row.vendor_id, deliveryPartnerId: row.partner_id, deliveryFee: Number(row.delivery_charge || 0), subtotal: Number(row.product_amount || 0), productTax: Number(row.product_tax || 0), total: Number(row.total || 0), deliveryLat: row.delivery_lat, deliveryLng: row.delivery_lng, deliveryAddress: row.delivery_address, orderedAt: row.created_at });
+    if (name === 'users') return Object.assign({}, row, { phoneNumber: row.phone });
+    return row;
+  }
+  function Snap(row, exists) { this.id = id(row); this.exists = exists !== false; this._row = row || {}; }
+  Snap.prototype.data = function () { return Object.assign({}, this._row); };
+  function Snapshot(rows) { this.docs = rows.map(function (row) { return new Snap(row); }); }
+  Snapshot.prototype.forEach = function (fn) { this.docs.forEach(fn); };
+  function Collection(name, documentId) { this.name = name; this.documentId = documentId || ''; this.filters = []; this.max = 0; }
+  Collection.prototype.clone = function () { var copy = new Collection(this.name, this.documentId); copy.filters = this.filters.slice(); copy.max = this.max; return copy; };
   Collection.prototype.doc = function (value) { return new Collection(this.name, value); };
-  Collection.prototype.where = function (field, op, value) { var next = this.clone(); next.filters.push({ field: field, op: op, value: value }); return next; };
+  Collection.prototype.where = function (field, op, value) { var copy = this.clone(); copy.filters.push({ field: field, op: op, value: value }); return copy; };
   Collection.prototype.orderBy = function () { return this.clone(); };
-  Collection.prototype.limit = function (value) { var next = this.clone(); next.max = Number(value) || 0; return next; };
-  Collection.prototype.rows = function () { var ref = this; return ready().then(function () { if (ref.name === 'shops') return request('/catalog/shops').then(function (body) { return (body.items || []).map(legacyCatalog); }); if (ref.name === 'products') return request('/catalog/products').then(function (body) { return (body.items || []).map(function (row) { return Object.assign({}, row, { id: rowId(row), shopId: String(row.vendorRef || ''), vendorId: String(row.vendorRef || ''), ownerUid: String(row.vendorRef || ''), image: row.images && row.images[0] || '', isActive: row.isAvailable !== false, desc: row.description || '' }); }); }); if (ref.name === 'orders') return request('/orders/mine').then(function (body) { return (body.items || []).map(legacyOrder); }); if (ref.name === 'users' && currentUser) return request('/auth/me').then(function (body) { return [Object.assign({}, body.user, { id: body.user.id, phoneNumber: body.user.phone })]; }); return []; }); };
-  Collection.prototype.get = function () { var ref = this; return ref.rows().then(function (rows) { var found = ref.id ? rows.find(function (row) { return rowId(row) === String(ref.id); }) : null; return ref.id ? new Snap(found || { id: ref.id }, !!found) : new Snapshot(matches(rows, ref)); }); };
-  Collection.prototype.add = function (data) { if (this.name !== 'orders') return Promise.reject(new Error('This feature has not been migrated to MongoDB yet.')); var items = (data.items || []).map(function (item) { return { productId: String(item.productId || item.id || ''), qty: Number(item.qty) || 1 }; }), lat = Number(data.deliveryLat), lng = Number(data.deliveryLng); return request('/orders', { method: 'POST', body: JSON.stringify({ vendorId: String(data.vendorId || data.shopId || ''), items: items, address: { text: data.deliveryAddress || '', pincode: data.pincode || '', location: { type: 'Point', coordinates: [lng, lat] } }, paymentMethod: data.paymentMethod || 'cod' }) }).then(function (body) { return { id: rowId(body.order) }; }); };
-  Collection.prototype.set = function (data) { if (this.name === 'users' && currentUser && String(this.id) === currentUser.uid) return request('/auth/me', { method: 'PATCH', body: JSON.stringify({ name: data.name || data.displayName, phone: data.phone || data.phoneNumber }) }); return Promise.reject(new Error('This document cannot be changed from the customer app.')); };
-  Collection.prototype.update = function (data) { if (this.name === 'orders' && String(data.status || '').toLowerCase() === 'cancelled') return request('/orders/' + encodeURIComponent(this.id) + '/status', { method: 'PATCH', body: JSON.stringify({ status: 'cancelled' }) }); if (this.name === 'users') return this.set(data); return Promise.reject(new Error('This update is not allowed.')); };
-  Collection.prototype.onSnapshot = function (success, failure) { var ref = this, active = true; function load() { ref.get().then(function (value) { if (active) success(value); }).catch(function (error) { if (active && failure) failure(error); }); } load(); var timer = setInterval(load, 5000); return function () { active = false; clearInterval(timer); }; };
-  var auth = { get currentUser() { return currentUser; }, onAuthStateChanged: function (callback) { authListeners.push(callback); ready().then(function () { callback(currentUser); }); return function () { authListeners = authListeners.filter(function (item) { return item !== callback; }); }; }, signInWithEmailAndPassword: function (email, password) { return ready().then(function () { return request('/auth/login', { method: 'POST', body: JSON.stringify({ email: email, password: password }) }); }).then(function (body) { localStorage.setItem(TOKEN_KEY, body.accessToken); localStorage.setItem(REFRESH_KEY, body.refreshToken); emit(toUser(body.user)); return { user: currentUser }; }); }, createUserWithEmailAndPassword: function (email, password) { return ready().then(function () { return request('/auth/register', { method: 'POST', body: JSON.stringify({ email: email, password: password, name: localStorage.getItem('jora_pending_signup_name') || '' }) }); }).then(function (body) { localStorage.setItem(TOKEN_KEY, body.accessToken); localStorage.setItem(REFRESH_KEY, body.refreshToken); emit(toUser(body.user)); return { user: currentUser, needsEmailConfirmation: false }; }); }, signOut: function () { var refreshToken = localStorage.getItem(REFRESH_KEY); localStorage.removeItem(TOKEN_KEY); localStorage.removeItem(REFRESH_KEY); emit(null); return refreshToken ? fetch(baseUrl + '/auth/logout', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ refreshToken: refreshToken }) }).catch(function () {}) : Promise.resolve(); }, resendSignupConfirmation: function () { return Promise.resolve(); } };
-  function firestore() { return { collection: function (name) { return new Collection(name); } }; } firestore.FieldValue = { serverTimestamp: function () { return new Date().toISOString(); } };
-  window.firebase = { apps: [], initializeApp: function () { return {}; }, auth: function () { return auth; }, firestore: firestore, analytics: function () { return {}; }, messaging: function () { return {}; } }; window.auth = auth; window.db = firestore();
-  function money(value) { return Math.round((Number(value) || 0) * 100) / 100; }
-  window.JoraPricing = { DELIVERY_RATE_PER_KM: 10, calculateTax: function () { return 0; }, getOrderTotals: function (input) { input = input || {}; var amount = money((input.items || []).reduce(function (sum, item) { return sum + (Number(item.price) || 0) * (Number(item.qty) || 0); }, 0)), distance = Math.round((Number(input.distanceKm) || 0) * 10) / 10, charge = Math.round(distance * 10); return { productAmount: amount, distanceKm: distance, deliveryCharge: charge, productTax: 0, total: money(amount + charge) }; } };
-  function apiUser() { return currentUser ? { id: currentUser.uid, email: currentUser.email, user_metadata: { full_name: currentUser.displayName } } : null; }
-  function apiAuth() {
-    return {
-      getUser: function () { return ready().then(function () { return { data: { user: apiUser() }, error: null }; }); },
-      signInWithPassword: function (input) { return auth.signInWithEmailAndPassword(input.email, input.password).then(function () { return { data: { user: apiUser(), session: { access_token: token() } }, error: null }; }); },
-      signUp: function (input) {
-        var metadata = input.options && input.options.data || {}; localStorage.setItem('jora_pending_signup_name', metadata.full_name || '');
-        return auth.createUserWithEmailAndPassword(input.email, input.password).then(function () { return request('/auth/me', { method: 'PATCH', body: JSON.stringify({ phone: metadata.phone || '' }) }); }).then(function () { return { data: { user: apiUser(), session: { access_token: token() } }, error: null }; });
-      },
-      onAuthStateChange: function (callback) { return { data: { subscription: { unsubscribe: auth.onAuthStateChanged(function (user) { callback(user ? 'SIGNED_IN' : 'SIGNED_OUT', user ? { user: apiUser() } : null); }) } } }; }
-    };
-  }
-  function profileQuery() {
-    var fields = {};
-    return {
-      select: function () { return this; }, eq: function () { return this; },
-      maybeSingle: function () { return request('/auth/me').then(function (body) { var user = body.user || {}, row = { id: user.id, full_name: user.name || '', email: user.email || '', phone: user.phone || '', address: user.address || '', avatar_url: user.avatarUrl || null }; return { data: row, error: null }; }); },
-      upsert: function (row) { return request('/auth/me', { method: 'PATCH', body: JSON.stringify({ name: row.full_name, phone: row.phone, address: row.address, avatarUrl: row.avatar_url || '' }) }).then(function () { return { data: null, error: null }; }); }
-    };
-  }
-  function noDataQuery() { return { select: function () { return this; }, eq: function () { return this; }, in: function () { return this; }, maybeSingle: function () { return Promise.resolve({ data: null, error: null }); }, then: function (resolve) { return Promise.resolve({ data: [], error: null }).then(resolve); }, delete: function () { return this; } }; }
-  window.JoraSupabase = { ready: function () { return ready().then(function () { return { auth: apiAuth(), from: function (table) { return table === 'profiles' ? profileQuery() : noDataQuery(); }, storage: { from: function () { return { upload: function () { return Promise.resolve({ error: new Error('Profile image uploads will be added with secure object storage.') }); }, getPublicUrl: function () { return { data: { publicUrl: '' } }; } }; } } }; }); }, get client() { return null; } };
+  Collection.prototype.limit = function (value) { var copy = this.clone(); copy.max = Number(value) || 0; return copy; };
+  Collection.prototype.rows = function () {
+    var ref = this, table = tables[ref.name] || ref.name;
+    return boot().then(function (c) {
+      var q = c.from(table).select('*');
+      if (ref.documentId) q = q.eq('id', ref.documentId);
+      ref.filters.forEach(function (filter) { if (filter.op === '==') q = q.eq(filter.field === 'customerUid' ? 'user_id' : filter.field, filter.value); });
+      if (ref.max) q = q.limit(ref.max);
+      return q.then(function (result) { if (result.error) throw result.error; return (result.data || []).map(function (row) { return legacyRow(ref.name, row); }); });
+    });
+  };
+  Collection.prototype.get = function () { var ref = this; return this.rows().then(function (rows) { return ref.documentId ? new Snap(rows[0] || { id: ref.documentId }, Boolean(rows[0])) : new Snapshot(rows); }); };
+  Collection.prototype.add = function (data) { var table = tables[this.name] || this.name; return boot().then(function (c) { return c.from(table).insert(data).select().single(); }).then(function (r) { if (r.error) throw r.error; return { id: r.data.id }; }); };
+  Collection.prototype.set = function (data) { var table = tables[this.name] || this.name, ref = this; return boot().then(function (c) { return c.from(table).upsert(Object.assign({}, data, { id: ref.documentId })); }).then(function (r) { if (r.error) throw r.error; return r; }); };
+  Collection.prototype.update = function (data) { var table = tables[this.name] || this.name, ref = this; return boot().then(function (c) { return c.from(table).update(data).eq('id', ref.documentId); }).then(function (r) { if (r.error) throw r.error; return r; }); };
+  Collection.prototype.onSnapshot = function (success, failure) {
+    var ref = this, alive = true, channel;
+    ref.get().then(function (value) { if (alive) success(value); }).catch(function (error) { if (alive && failure) failure(error); });
+    boot().then(function (c) { channel = c.channel('legacy-' + ref.name + '-' + Math.random()).on('postgres_changes', { event: '*', schema: 'public', table: tables[ref.name] || ref.name }, function () { ref.get().then(success).catch(failure); }).subscribe(); });
+    return function () { alive = false; if (channel) getClient().then(function (c) { c.removeChannel(channel); }); };
+  };
+  var auth = { get currentUser() { return currentUser; }, onAuthStateChanged: function (fn) { listeners.push(fn); boot().then(function () { fn(currentUser); }); return function () { listeners = listeners.filter(function (x) { return x !== fn; }); }; }, signInWithEmailAndPassword: function (email, password) { return boot().then(function (c) { return c.auth.signInWithPassword({ email: email, password: password }); }).then(function (r) { if (r.error) throw r.error; return { user: userForLegacy(r.data.user) }; }); }, createUserWithEmailAndPassword: function (email, password) { return boot().then(function (c) { return c.auth.signUp({ email: email, password: password, options: { data: { full_name: localStorage.getItem('jora_pending_signup_name') || '' } } }); }).then(function (r) { if (r.error) throw r.error; return { user: userForLegacy(r.data.user), needsEmailConfirmation: !r.data.session }; }); }, signOut: function () { return boot().then(function (c) { return c.auth.signOut(); }); }, resendSignupConfirmation: function () { return Promise.resolve(); } };
+  function database() { return { collection: function (name) { return new Collection(name); } }; }
+  database.FieldValue = { serverTimestamp: function () { return new Date().toISOString(); } };
+  window.jora = { apps: [], initializeApp: function () { boot(); return {}; }, auth: function () { return auth; }, firestore: database, analytics: function () { return {}; }, messaging: function () { return {}; } };
+  window.auth = auth; window.db = database(); window.JoraSupabase = { ready: function () { return boot(); }, get client() { return client; } };
+  window.JoraPricing = { DELIVERY_RATE_PER_KM: 10, getOrderTotals: function (input) { input = input || {}; var amount = (input.items || []).reduce(function (sum, item) { return sum + Number(item.price || 0) * Number(item.qty || 0); }, 0), distance = Number(input.distanceKm || 0), deliveryCharge = Math.round(distance * 10 * 100) / 100; return { productAmount: amount, distanceKm: distance, deliveryCharge: deliveryCharge, productTax: 0, total: amount + deliveryCharge }; } };
+  boot().catch(function (error) { console.error('Jora backend unavailable:', error.message); });
 }());

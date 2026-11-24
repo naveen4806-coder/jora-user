@@ -117,8 +117,8 @@
     var render = mode === 'shops' ? renderShops : renderProducts;
     if (cached.length) render(cached);
     try {
-      if (!firebase.apps.length) firebase.initializeApp({});
-      var db = firebase.firestore();
+      if (!jora.apps.length) jora.initializeApp({});
+      var db = jora.firestore();
       db.collection(collectionName).limit(100).onSnapshot(function (snapshot) {
         var list = [];
         snapshot.forEach(function (doc) { list.push(Object.assign({ id: doc.id }, doc.data())); });

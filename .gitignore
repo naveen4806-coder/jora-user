@@ -1,6 +1,7 @@
 node_modules/
 dist/
 .vite/
+jora-dev.log
 .env
 .env.*
 !.env.example

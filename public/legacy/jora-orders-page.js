@@ -17,6 +17,6 @@
     document.querySelectorAll('[name=status]').forEach(function(x){x.onchange=function(){state.status=this.value;render()}});
     document.querySelectorAll('[name=time]').forEach(function(x){x.onchange=function(){state.time=this.value;render()}})
   }
-  function start(){if(!firebase.apps.length)firebase.initializeApp(cfg);firebase.auth().onAuthStateChanged(function(user){if(unsubscribeOrders){unsubscribeOrders();unsubscribeOrders=null}if(!user){all=JoraShell.read('ls_orders',[]);render();return}unsubscribeOrders=firebase.firestore().collection('orders').where('customerUid','==',user.uid).limit(100).onSnapshot(function(s){all=[];s.forEach(function(d){all.push(Object.assign({id:d.id},d.data()))});render()},function(){all=JoraShell.read('ls_orders',[]);render()})});window.addEventListener('pagehide',function(){if(unsubscribeOrders)unsubscribeOrders()},{once:true})}
+  function start(){if(!jora.apps.length)jora.initializeApp(cfg);jora.auth().onAuthStateChanged(function(user){if(unsubscribeOrders){unsubscribeOrders();unsubscribeOrders=null}if(!user){all=JoraShell.read('ls_orders',[]);render();return}unsubscribeOrders=jora.firestore().collection('orders').where('customerUid','==',user.uid).limit(100).onSnapshot(function(s){all=[];s.forEach(function(d){all.push(Object.assign({id:d.id},d.data()))});render()},function(){all=JoraShell.read('ls_orders',[]);render()})});window.addEventListener('pagehide',function(){if(unsubscribeOrders)unsubscribeOrders()},{once:true})}
   start();
 })();

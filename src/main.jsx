@@ -1,15 +1,11 @@
 import React, { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import './styles.css';
+import { supabase } from './utils/supabase';
 
 const LEGACY_PAGES = new Set(['opening.html', 'index.html', 'home.html', 'shop.html', 'product.html', 'information.html', 'shops.html', 'products.html', 'account.html', 'cart.html', 'checkout.html', 'checkout-map.html', 'wishlist.html', 'orders.html', 'wallet.html', 'settings.html', 'tracking.html', 'delivery.html']);
 
-// VITE_JORA_API_URL may be entered as either the Render service URL or the
-// complete API URL. Keep the legacy customer pages on the single /api base.
-function apiUrl() {
-  const value = String(import.meta.env.VITE_JORA_API_URL || `${window.location.origin}/api`).replace(/\/+$/, '');
-  return /\/api$/i.test(value) ? value : `${value}/api`;
-}
+window.__JORA_SUPABASE__ = supabase;
 
 function currentLegacyPage() {
   const page = window.location.pathname.split('/').pop();
@@ -39,12 +35,12 @@ function LegacyFrame() {
   }, []);
   React.useEffect(() => setReady(false), [page]);
   React.useEffect(() => {
-    const config = { type: 'jora:mongo-config', url: apiUrl() };
+    const config = { type: 'jora:supabase-ready' };
     const sendConfig = (target) => {
-      if (config.url && target) target.postMessage(config, window.location.origin);
+      if (target) target.postMessage(config, window.location.origin);
     };
     const onMessage = (event) => {
-      if (event.origin !== window.location.origin || event.data?.type !== 'jora:mongo-config-request') return;
+      if (event.origin !== window.location.origin || event.data?.type !== 'jora:supabase-request') return;
       sendConfig(event.source);
     };
     window.addEventListener('message', onMessage);
@@ -61,8 +57,7 @@ function LegacyFrame() {
       language.src = '/legacy/jora-global-language.js';
       frameDocument.head.appendChild(language);
     }
-    const url = apiUrl();
-    event.currentTarget.contentWindow?.postMessage({ type: 'jora:mongo-config', url }, window.location.origin);
+    event.currentTarget.contentWindow?.postMessage({ type: 'jora:supabase-ready' }, window.location.origin);
   };
   return <div className="legacy-frame-shell" aria-busy={!ready}>
     {!ready && <div className="legacy-frame-loader" aria-label="Loading Jora"><span className="legacy-loader-mark">J</span><span>Loading Jora</span></div>}

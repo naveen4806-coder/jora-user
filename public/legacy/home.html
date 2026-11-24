@@ -2045,11 +2045,11 @@ nav::before{background:linear-gradient(90deg,transparent,rgba(243,53,32,.24),tra
 <div class="reward-toast" id="reward-toast"></div>
 
 <script>
-// ====== FIREBASE ======
-firebase.initializeApp({});
-var db=firebase.firestore();
-try{firebase.analytics();}catch(e){console.warn('Analytics unavailable:',e&&e.message||e);}
-var auth=firebase.auth();
+// ====== jora ======
+jora.initializeApp({});
+var db=jora.firestore();
+try{jora.analytics();}catch(e){console.warn('Analytics unavailable:',e&&e.message||e);}
+var auth=jora.auth();
 
 // ====== REWARDS (derived only from delivered Firestore orders) ======
 var _rewardOrders=[],_rewardWeekKey='',_rewardProgress=0,_rewardClaimPending=false;
@@ -2093,7 +2093,7 @@ function eh(s){return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&
 function safeId(s){return encodeURIComponent(String(s==null?'':s)).replace(/'/g,'%27');}
 function toast(m,t){var e=document.getElementById('toast');e.textContent=m;e.className='toast-pop show'+(t?' '+t:'');clearTimeout(toast._t);toast._t=setTimeout(function(){e.className='toast-pop';},3200);}
 function haversine(la1,ln1,la2,ln2){var R=6371,dLat=(la2-la1)*Math.PI/180,dLng=(ln2-ln1)*Math.PI/180;var a=Math.sin(dLat/2)*Math.sin(dLat/2)+Math.cos(la1*Math.PI/180)*Math.cos(la2*Math.PI/180)*Math.sin(dLng/2)*Math.sin(dLng/2);return R*2*Math.atan2(Math.sqrt(a),Math.sqrt(1-a));}
-var _firebaseUser = null,_joraAuthResolved=false;  auth.onAuthStateChanged(function(user) {   _firebaseUser = user; _joraAuthResolved=true; switchCartForUser(user); if(user)ensureCustomerProfile(user); loadCurrentUser(); updateNavBadges(); updateCartUI(); if(window.NexCartNotifications&&window.NexCartNotifications.bindUser)window.NexCartNotifications.bindUser(user,db); });  function isLoggedIn(){ return !!_firebaseUser; }
+var _joraUser = null,_joraAuthResolved=false;  auth.onAuthStateChanged(function(user) {   _joraUser = user; _joraAuthResolved=true; switchCartForUser(user); if(user)ensureCustomerProfile(user); loadCurrentUser(); updateNavBadges(); updateCartUI(); if(window.NexCartNotifications&&window.NexCartNotifications.bindUser)window.NexCartNotifications.bindUser(user,db); });  function isLoggedIn(){ return !!_joraUser; }
 function ensureCustomerProfile(user){var ref=db.collection('users').doc(user.uid),saved=ldJ('ls_user_data',{});ref.set({uid:user.uid,name:saved.name||user.displayName||'',email:user.email||saved.email||'',phoneNumber:saved.phone||''},{merge:true}).catch(function(e){console.warn('Customer profile setup:',e.message);});}
 function getCurrentPathWithQuery(){return (window.location.pathname.split('/').pop()||'home.html')+window.location.search+window.location.hash;}
 function buildAuthUrl(tab){var current=getCurrentPathWithQuery();return 'home.html?auth='+(tab||'login')+'&return='+encodeURIComponent(current);}
@@ -2476,7 +2476,7 @@ function clearAuthState(){_currentUser=null;try{localStorage.setItem('ls_force_l
 function doLogout(){if(!confirm('Sign out of Zorra?'))return;clearAuthState();closeSettingsPanel();toast('Signed out. You can keep browsing as a guest.','info');auth.signOut().catch(function(){}).finally(function(){setTimeout(function(){window.location.replace('home.html');},300);});}
 
 // ======================================================
-//  BANNERS â€” adaptive size, reads Firebase admin_banners
+//  BANNERS â€” adaptive size, reads jora admin_banners
 // ======================================================
 function startBannerListener(){
   if(_bgUnsub){_bgUnsub();_bgUnsub=null;}
@@ -2633,7 +2633,7 @@ function stopBgTimer(){if(_bgTimer){clearInterval(_bgTimer);_bgTimer=null;}}
 function resetBgTimer(){stopBgTimer();startBgTimer();}
 
 // ======================================================
-//  OFFERS â€” adaptive image size, reads Firebase admin_offers
+//  OFFERS â€” adaptive image size, reads jora admin_offers
 // ======================================================
 var _offersUnsub=null;
 function startOffersListener(){
@@ -2654,7 +2654,7 @@ function startOffersListener(){
 function renderDefaultOffers(){
   var track=document.getElementById('offers-track');
   if(!track)return;
-  // Show built-in placeholder offer cards when no Firebase data
+  // Show built-in placeholder offer cards when no jora data
   track.innerHTML=[
     {badge:'20% OFF',icon:'ðŸŽ',name:'Fresh Apples',sub:'Fruits & Vegetables'},
     {badge:'15% OFF',icon:'ðŸ¥›',name:'Organic Milk',sub:'Dairy & Eggs'},
@@ -2846,7 +2846,7 @@ function startOffersListener(){
     });
 }
 
-// ====== CATEGORIES (from Firebase admin_categories) ======
+// ====== CATEGORIES (from jora admin_categories) ======
 var _catsUnsub=null;
 var CORE_CATEGORIES=[
   {id:'core-food',name:'Food',shopCategory:'Food',active:true,order:10},
@@ -3262,7 +3262,7 @@ function updateCartUI(){
 function openCartModal(){_cartRequested=true;_cartModalOpen=true;document.getElementById('cart-modal').classList.add('open');document.body.style.overflow='hidden';}
 function closeCartModal(){_cartRequested=false;_cartModalOpen=false;document.getElementById('cart-modal').classList.remove('open');document.body.style.overflow='';}
 
-// ====== FIREBASE LISTENERS ======
+// ====== jora LISTENERS ======
 showShopsStatus(t('shops_status_loading'),'#EEF3FF','#1446A0');
 db.collection('shops').limit(100).onSnapshot(function(snap){_shops=[];_usingSampleData=false;snap.forEach(function(d){_shops.push(Object.assign({id:d.id},d.data()));});ensureSampleCatalog();hideShopsStatus();renderShops();renderNewProducts();},function(){ensureSampleCatalog();hideShopsStatus();renderShops();renderNewProducts();});
 db.collection('products').limit(100).onSnapshot(function(snap){_products=[];snap.forEach(function(d){_products.push(Object.assign({id:d.id},d.data()));});ensureSampleCatalog();renderShops();renderNewProducts();},function(e){console.error('Products:',e);ensureSampleCatalog();hideShopsStatus();renderShops();renderNewProducts();});
@@ -4210,7 +4210,7 @@ function browseAllProducts(){
   if(totalNode)totalNode.textContent='₹'+(subtotal+commission+fee).toLocaleString('en-IN');
  };
  window.zorraCustomerFinalTotal=function(order){var subtotal=Number(order.subtotal!=null?order.subtotal:order.vendorAmount!=null?order.vendorAmount:order.total)||0,commission=Number(order.platformCommission!=null?order.platformCommission:Math.round(subtotal*commissionRate*100)/100),km=Number(order.deliveryDistanceKm);if(!isFinite(km)||km<=0)km=haversine(order.shopLat||11.02,order.shopLng||76.96,order.deliveryLat||11.0168,order.deliveryLng||76.9558);var delivery=Number(order.deliveryFee!=null?order.deliveryFee:(km<=2?15:(km<=4?25:(km<=5?40:60))));return Number(order.customerTotal!=null?order.customerTotal:subtotal+commission+delivery)||0;};
- if(firebase&&firebase.firestore&&firebase.firestore.CollectionReference){var proto=firebase.firestore.CollectionReference.prototype;if(!proto._zorraOriginalAdd){proto._zorraOriginalAdd=proto.add;proto.add=function(data){if(this.id==='orders'&&data&&data.type==='cart'&&data.subtotal!=null&&!data.pricingVersion){var subtotal=Number(data.subtotal)||0,commission=Math.round(subtotal*commissionRate*100)/100,delivery=Number(data.deliveryFee)||0,finalTotal=subtotal+commission+delivery;data.vendorAmount=subtotal;data.platformCommission=commission;data.commissionRate=commissionRate;data.customerTotal=finalTotal;data.total=finalTotal;data.pricingVersion=2;}return proto._zorraOriginalAdd.call(this,data);};}}
+ if(jora&&jora.firestore&&jora.firestore.CollectionReference){var proto=jora.firestore.CollectionReference.prototype;if(!proto._zorraOriginalAdd){proto._zorraOriginalAdd=proto.add;proto.add=function(data){if(this.id==='orders'&&data&&data.type==='cart'&&data.subtotal!=null&&!data.pricingVersion){var subtotal=Number(data.subtotal)||0,commission=Math.round(subtotal*commissionRate*100)/100,delivery=Number(data.deliveryFee)||0,finalTotal=subtotal+commission+delivery;data.vendorAmount=subtotal;data.platformCommission=commission;data.commissionRate=commissionRate;data.customerTotal=finalTotal;data.total=finalTotal;data.pricingVersion=2;}return proto._zorraOriginalAdd.call(this,data);};}}
  var baseCheckout=window.checkoutCart;window.checkoutCart=function(){var result=baseCheckout.apply(this,arguments);setTimeout(function(){var summary=document.getElementById('del-summary');if(!summary||!_pendingOrder)return;var subtotal=getCartTotal(),commission=Math.round(subtotal*commissionRate*100)/100;if(summary.querySelector('.zorra-commission-preview'))return;var box=document.createElement('div');box.className='zorra-commission-preview';box.innerHTML='<div class="zh-fee"><span>All taxes included</span><b>&#8377;'+commission.toLocaleString('en-IN')+'</b></div><div style="display:flex;justify-content:space-between;gap:12px;border-top:1px solid var(--border);padding-top:9px;margin-top:5px;font-size:.88rem;font-weight:800"><span>Final amount</span><span id="zh-location-total" style="color:var(--orange)">Calculated after location</span></div>';var proof=summary.querySelector('.zh-proof');summary.insertBefore(box,proof||null);window.zorraUpdateDeliveryQuote();},0);return result;};
  var baseItems=window.renderOrderItemsList||renderOrderItemsList;window.renderOrderItemsList=function(order){var existing=baseItems(order),subtotal=Number(order.subtotal!=null?order.subtotal:order.vendorAmount!=null?order.vendorAmount:order.total)||0,commission=Number(order.platformCommission!=null?order.platformCommission:Math.round(subtotal*.10*100)/100),km=Number(order.deliveryDistanceKm);if(!isFinite(km)||km<=0)km=haversine(order.shopLat||11.02,order.shopLng||76.96,order.deliveryLat||11.0168,order.deliveryLng||76.9558);var delivery=Number(order.deliveryFee!=null?order.deliveryFee:(km<=2?15:(km<=4?25:(km<=5?40:60)))),finalTotal=Number(order.customerTotal!=null?order.customerTotal:subtotal+commission+delivery)||0;return existing+'<div class="order-price-breakdown"><div><span>Items subtotal</span><b>&#8377;'+subtotal.toLocaleString('en-IN')+'</b></div><div><span>All taxes included</span><b>&#8377;'+commission.toLocaleString('en-IN')+'</b></div><div><span>Delivery charge'+(km?' ('+km.toFixed(1)+' km)':'')+'</span><b>&#8377;'+delivery.toLocaleString('en-IN')+'</b></div><div class="final"><span>Final amount</span><b>&#8377;'+finalTotal.toLocaleString('en-IN')+'</b></div></div>';};
 })();
@@ -4587,7 +4587,7 @@ html,body{max-width:100%;overflow-x:hidden}.customer-home{background:var(--zr-bg
   window.zorraCustomerFinalTotal=function(order){var km=Number(order.deliveryDistanceKm);if(!isFinite(km)||km<=0)km=haversine(order.shopLat||11.02,order.shopLng||76.96,order.deliveryLat||11.0168,order.deliveryLng||76.9558);var delivery=order.deliveryFee!=null?Number(order.deliveryFee):getDeliveryPricing(km).deliveryFee,productTotal=Number(order.customerProductPrice!=null?order.customerProductPrice:order.subtotal!=null?order.subtotal:order.vendorAmount!=null?order.vendorAmount:order.total)||0;return Number(order.customerTotal!=null?order.customerTotal:roundMoney(productTotal+(Number(order.platformFee)||0)+delivery))||0;};
   var priorConfirm=window.confirmOrder;window.confirmOrder=async function(){if(_pendingOrder&&_pendingOrder.shop&&isFinite(delLat)&&isFinite(delLng)){var s=_pendingOrder.shop,slat=parseFloat(s.lat),slng=parseFloat(s.lng);if(isFinite(slat)&&isFinite(slng)&&!getDeliveryPricing(haversine(delLat,delLng,slat,slng)).serviceable){toast("Sorry, this shop is currently outside ZORRA's 7 km delivery range.",'err');return;}}return priorConfirm.apply(this,arguments);};
   var baseCheckout=window.checkoutCart;window.checkoutCart=function(){prepareProducts();var result=baseCheckout.apply(this,arguments);setTimeout(function(){var summary=document.getElementById('del-summary');if(!summary||!_pendingOrder)return;var p=orderPricing(_cart.items),box=summary.querySelector('.zorra-commission-preview');if(!box){box=document.createElement('div');box.className='zorra-commission-preview';var proof=summary.querySelector('.zh-proof');summary.insertBefore(box,proof||null);}box.innerHTML='<div class="zh-fee"><span>Customer product markup (10%)</span><b>₹'+p.customerMarkup.toLocaleString('en-IN')+'</b></div><div class="zorra-price-note">Already included in the displayed product prices.</div><div style="display:flex;justify-content:space-between;gap:12px;border-top:1px solid var(--border);padding-top:9px;margin-top:8px;font-size:.88rem;font-weight:800"><span>Final amount</span><span id="zh-location-total" style="color:var(--orange)">Calculated after location</span></div>';window.zorraUpdateDeliveryQuote();},0);return result;};
-  if(firebase&&firebase.firestore&&firebase.firestore.CollectionReference){var proto=firebase.firestore.CollectionReference.prototype,previous=proto.add;if(!proto._zorraPricingV3Add){proto._zorraPricingV3Add=previous;proto.add=function(data){if(this.id==='orders'&&data&&data.type==='cart'&&Array.isArray(data.items)){var p=orderPricing(data.items),km=Number(data.deliveryDistanceKm),delivery=getDeliveryPricing(km);data.items=data.items.map(function(item){var x=linePricing(item);return Object.assign({},item,{vendorBasePrice:x.vendorBasePrice,customerProductPrice:x.customerUnitPrice,price:x.customerUnitPrice,vendorCommissionPercentage:x.vendorCommissionPercentage,vendorCommissionAmount:x.vendorCommissionAmount,vendorEarnings:x.vendorEarnings,customerMarkup:x.customerMarkup,zorraProductRevenue:x.zorraProductRevenue});});data.vendorBasePrice=p.vendorBasePrice;data.customerProductPrice=p.customerProductPrice;data.customerMarkup=p.customerMarkup;data.vendorCommissionPercentage=Object.keys(p.rates).length===1?Number(Object.keys(p.rates)[0]):null;data.vendorCommissionAmount=p.vendorCommissionAmount;data.vendorEarnings=p.vendorEarnings;data.zorraCustomerRevenue=p.customerMarkup;data.zorraVendorRevenue=p.vendorCommissionAmount;data.zorraProductRevenue=p.zorraProductRevenue;data.vendorAmount=p.vendorBasePrice;data.subtotal=p.vendorBasePrice;data.platformCommission=p.customerMarkup;data.commissionRate=.10;data.vendorSettlement=p.vendorEarnings;if(delivery.serviceable){data.deliveryFee=delivery.deliveryFee;data.deliveryPartnerPayout=delivery.partnerPayout;data.zorraDeliveryMargin=delivery.zorraDeliveryMargin;}data.customerTotal=roundMoney(p.customerProductPrice+(Number(data.platformFee)||0)+(Number(data.deliveryFee)||0));data.total=data.customerTotal;data.codCollectionTotal=data.paymentMethod==='cod'?data.customerTotal:0;data.pricingVersion=3;}return previous.call(this,data);};}}
+  if(jora&&jora.firestore&&jora.firestore.CollectionReference){var proto=jora.firestore.CollectionReference.prototype,previous=proto.add;if(!proto._zorraPricingV3Add){proto._zorraPricingV3Add=previous;proto.add=function(data){if(this.id==='orders'&&data&&data.type==='cart'&&Array.isArray(data.items)){var p=orderPricing(data.items),km=Number(data.deliveryDistanceKm),delivery=getDeliveryPricing(km);data.items=data.items.map(function(item){var x=linePricing(item);return Object.assign({},item,{vendorBasePrice:x.vendorBasePrice,customerProductPrice:x.customerUnitPrice,price:x.customerUnitPrice,vendorCommissionPercentage:x.vendorCommissionPercentage,vendorCommissionAmount:x.vendorCommissionAmount,vendorEarnings:x.vendorEarnings,customerMarkup:x.customerMarkup,zorraProductRevenue:x.zorraProductRevenue});});data.vendorBasePrice=p.vendorBasePrice;data.customerProductPrice=p.customerProductPrice;data.customerMarkup=p.customerMarkup;data.vendorCommissionPercentage=Object.keys(p.rates).length===1?Number(Object.keys(p.rates)[0]):null;data.vendorCommissionAmount=p.vendorCommissionAmount;data.vendorEarnings=p.vendorEarnings;data.zorraCustomerRevenue=p.customerMarkup;data.zorraVendorRevenue=p.vendorCommissionAmount;data.zorraProductRevenue=p.zorraProductRevenue;data.vendorAmount=p.vendorBasePrice;data.subtotal=p.vendorBasePrice;data.platformCommission=p.customerMarkup;data.commissionRate=.10;data.vendorSettlement=p.vendorEarnings;if(delivery.serviceable){data.deliveryFee=delivery.deliveryFee;data.deliveryPartnerPayout=delivery.partnerPayout;data.zorraDeliveryMargin=delivery.zorraDeliveryMargin;}data.customerTotal=roundMoney(p.customerProductPrice+(Number(data.platformFee)||0)+(Number(data.deliveryFee)||0));data.total=data.customerTotal;data.codCollectionTotal=data.paymentMethod==='cod'?data.customerTotal:0;data.pricingVersion=3;}return previous.call(this,data);};}}
   var baseItems=window.renderOrderItemsList||renderOrderItemsList;window.renderOrderItemsList=function(order){var existing=baseItems(order);if(order.pricingVersion!==3)return existing;var km=Number(order.deliveryDistanceKm),delivery=Number(order.deliveryFee)||0,total=Number(order.customerTotal)||0;return existing+'<div class="order-price-breakdown"><div><span>Customer product value</span><b>₹'+Number(order.customerProductPrice||0).toLocaleString('en-IN')+'</b></div><div><span>Customer product markup (included)</span><b>₹'+Number(order.customerMarkup||0).toLocaleString('en-IN')+'</b></div><div><span>Delivery charge'+(isFinite(km)?' ('+km.toFixed(1)+' km)':'')+'</span><b>₹'+delivery.toLocaleString('en-IN')+'</b></div><div class="final"><span>Final amount</span><b>₹'+total.toLocaleString('en-IN')+'</b></div></div>';};
 })();
 </script>
@@ -4611,7 +4611,7 @@ html,body{max-width:100%;overflow-x:hidden}.customer-home{background:var(--zr-bg
  var priorUpdate=window.updateCartUI||updateCartUI;window.updateCartUI=function(){var result=priorUpdate.apply(this,arguments);renderProgress();return result;};
  var priorCheckout=window.checkoutCart||checkoutCart;window.checkoutCart=function(){var base=getBaseProductTotal(_cart.items);if(base<MINIMUM_ORDER_VALUE){toast(minimumMessage(_cart.items,true),'err');renderProgress();return;}return priorCheckout.apply(this,arguments);};
  var priorConfirm=window.confirmOrder||confirmOrder;window.confirmOrder=async function(){var items=_pendingOrder&&_pendingOrder.cart?_pendingOrder.cart.items:_cart.items,base=getBaseProductTotal(items);if(base<MINIMUM_ORDER_VALUE){toast(minimumMessage(items,true),'err');return;}return priorConfirm.apply(this,arguments);};
- if(firebase&&firebase.firestore&&firebase.firestore.CollectionReference){var proto=firebase.firestore.CollectionReference.prototype,priorAdd=proto.add;if(!proto._zorraMinimumOrderAdd){proto._zorraMinimumOrderAdd=priorAdd;proto.add=function(data){if(this.id==='orders'&&data&&data.type==='cart'&&Array.isArray(data.items)){var base=getBaseProductTotal(data.items);if(base<MINIMUM_ORDER_VALUE)return Promise.reject(new Error(minimumMessage(data.items,true)));data.minimumOrderValue=MINIMUM_ORDER_VALUE;data.baseProductTotal=base;}return priorAdd.call(this,data);};}}
+ if(jora&&jora.firestore&&jora.firestore.CollectionReference){var proto=jora.firestore.CollectionReference.prototype,priorAdd=proto.add;if(!proto._zorraMinimumOrderAdd){proto._zorraMinimumOrderAdd=priorAdd;proto.add=function(data){if(this.id==='orders'&&data&&data.type==='cart'&&Array.isArray(data.items)){var base=getBaseProductTotal(data.items);if(base<MINIMUM_ORDER_VALUE)return Promise.reject(new Error(minimumMessage(data.items,true)));data.minimumOrderValue=MINIMUM_ORDER_VALUE;data.baseProductTotal=base;}return priorAdd.call(this,data);};}}
  renderProgress();
 })();
 </script>
