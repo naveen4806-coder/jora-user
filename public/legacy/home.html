@@ -3330,6 +3330,7 @@ function renderDropdown(term){
   dd.innerHTML=html;dd.classList.add('show');cleanBrokenSymbols(dd);
 }
 function filterByShopCategory(cat,directToProducts){
+  if(directToProducts){location.href='products.html?category='+encodeURIComponent(cat);return;}
   if(_activeCategory===cat){_activeCategory='';_activeSubCategory='';}else{_activeCategory=cat;_activeSubCategory='';_searchTerm='';document.getElementById('search-inp').value='';}
   if(directToProducts){closeCategoryMenu();_previewCategory='';document.querySelectorAll('.cats-tab').forEach(function(el){el.classList.remove('preview');});}
   else openCategoryMenu();
@@ -4810,6 +4811,7 @@ body.theme-dark .advertisement-heading h2{color:#EDF5EF!important}body.theme-dar
   .jora-shop-toolbar{grid-template-columns:minmax(0,1fr)!important}
   .jora-shop-sort{display:none!important}
 </style>
+<style>#banner-gallery,.advertisement-panel{display:none!important}</style>
 </body>
 </html>
 

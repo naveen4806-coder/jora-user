@@ -43,7 +43,8 @@
     var sections = Array.prototype.slice.call(content.querySelectorAll('[data-browse-section]'));
     var empty = document.getElementById('browse-no-results');
     var count = document.getElementById('browse-result-count');
-    var active = 'All';
+    var requestedCategory = new URLSearchParams(window.location.search).get('category');
+    var active = requestedCategory && chips.some(function (chip) { return chip.dataset.browseFilter === requestedCategory; }) ? requestedCategory : 'All';
     function apply() {
       var query = text(input.value).trim();
       var shown = 0;
