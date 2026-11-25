@@ -127,7 +127,7 @@
       var message = /relation .*profiles|does not exist/i.test(error && error.message || '')
         ? 'Account setup is incomplete. Run the Supabase profile migration, then try again.'
         : 'Unable to load your account. Please try again.';
-      app.innerHTML = JoraShell.nav('account') + '<main class="jora-page"><div class="jora-empty">' + esc(message) + ' <button class="jora-button" onclick="location.reload()">Try again</button></div></main>';
+      app.innerHTML = JoraShell.nav('account') + '<main class="jora-page"><div class="jora-empty">' + esc(message) + ' <button class="jora-button" onclick="location.reload()">Try again</button><p><a href="more.html">Open Cart, My Orders and Wishlist</a></p></div></main>';
     }
   }
   function bind(api, user, profile) {
