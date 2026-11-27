@@ -42,7 +42,7 @@
       if (ref.documentId) q = q.eq('id', ref.documentId);
       ref.filters.forEach(function (filter) { if (filter.op === '==') q = q.eq(filter.field === 'customerUid' ? 'user_id' : filter.field, filter.value); });
       if (ref.max) q = q.limit(ref.max);
-      return q.then(function (result) { if (result.error) throw result.error; return (result.data || []).map(function (row) { return legacyRow(ref.name, row); }); });
+      return q.then(function (result) { if (result.error && ref.name === 'orders' && /user_id/i.test(result.error.message || '') && ref.filters.some(function (f) { return f.field === 'customerUid' && f.op === '=='; })) { var customer = ref.filters.find(function (f) { return f.field === 'customerUid'; }); var fallback = c.from(table).select('*').eq('customer_id', customer.value); if (ref.max) fallback = fallback.limit(ref.max); return fallback; } return result; }).then(function (result) { if (result.error) throw result.error; return (result.data || []).map(function (row) { return legacyRow(ref.name, row); }); });
     });
   };
   Collection.prototype.get = function () { var ref = this; return this.rows().then(function (rows) { return ref.documentId ? new Snap(rows[0] || { id: ref.documentId }, Boolean(rows[0])) : new Snapshot(rows); }); };
